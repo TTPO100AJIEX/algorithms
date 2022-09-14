@@ -3,161 +3,168 @@
 #include <algorithm>
 #include <utility>
 #include <cstdint>
+#include <charconv>
 
 class BigInt {
 public:
     BigInt() = default;
     BigInt(const std::string& value, bool normalized = false);
+    BigInt(size_t length);
 
-    size_t length() const {
-        return this->value_.size();
-    }
+    static void stringFormat(std::string& value);
     std::string value() const;
 
-    friend std::istream& operator>>(std::istream& os, BigInt& e);
-    friend std::ostream& operator<<(std::ostream& os, const BigInt& e);
+    friend std::istream& operator>>(std::istream& outstream, BigInt& number);
+    friend std::ostream& operator<<(std::ostream& outstream, const BigInt& number);
 
-    friend BigInt operator+(const BigInt& left, const BigInt& right);
-    friend BigInt operator-(BigInt left, const BigInt& right);  // left must be bigger than right
-    friend BigInt operator*(const BigInt& left, const BigInt& right);
-    friend BigInt operator*(BigInt left, unsigned int power_of_10);
+    BigInt& operator*=(const BigInt& right);
+    BigInt& operator+=(const BigInt& right);
+    void inplaceSum(const BigInt& right, size_t offset = 0);
+    BigInt& operator-=(const BigInt& right);  // "this" must be bigger than right
 
 private:
-    std::string value_;
+    mutable std::string value_;  // reversed base-10 notation
 
-    void removeLeadingZeros();
-    BigInt addLeadingZerosToLength(size_t desired_length) const;
-    std::pair<BigInt, BigInt> split(size_t part_length) const;
+    void normalizeToLength(size_t desired_length) const;
 };
 
 BigInt::BigInt(const std::string& value, bool normalized) : value_(value) {
-    if (normalized) {
-        return;
-    }
-    for (std::string::iterator it = this->value_.begin(); it != this->value_.end(); it++) {
-        *it -= '0';
+    if (!normalized) {
+        BigInt::stringFormat(this->value_);
     }
 }
+BigInt::BigInt(size_t length) {
+    this->value_.reserve(length);
+}
 
+void BigInt::stringFormat(std::string& value) {
+    size_t length = value.size();
+    for (size_t i = 0; i < length / 2; ++i) {
+        value[i] -= '0';
+        value[length - i - 1] -= '0';
+        std::swap(value[i], value[length - i - 1]);
+    }
+    if (length % 2 == 1) {
+        value[length / 2] -= '0';
+    }
+}
 std::string BigInt::value() const {
     std::string value = this->value_;
-    for (std::string::iterator it = value.begin(); it != value.end(); it++) {
-        (*it) += '0';
+    size_t length = value.size();
+    for (size_t i = 0; i < length / 2; ++i) {
+        value[i] += '0';
+        value[length - i - 1] += '0';
+        std::swap(value[i], value[length - i - 1]);
+    }
+    if (length % 2 == 1) {
+        value[length / 2] += '0';
     }
     return (value);
 }
-
 std::istream& operator>>(std::istream& instream, BigInt& number) {
     instream >> number.value_;
-    for (std::string::iterator it = number.value_.begin(); it != number.value_.end(); it++) {
-        *it -= '0';
-    }
+    BigInt::stringFormat(number.value_);
     return instream;
 }
 std::ostream& operator<<(std::ostream& outstream, const BigInt& number) {
-    for (std::string::const_iterator it = number.value_.cbegin(); it != number.value_.cend();
-         it++) {
-        outstream << static_cast<char>(*it + '0');
-    }
+    outstream << number.value();
     return outstream;
 }
 
-void BigInt::removeLeadingZeros() {
-    this->value_.erase(0, this->value_.find_first_not_of(static_cast<char>(0)));
-    if (this->length() == 0) {
-        this->value_ = "0";
-        this->value_[0] -= '0';
+void BigInt::normalizeToLength(size_t desired_length) const {
+    if (desired_length <= this->value_.size()) {
+        size_t delete_from =
+            std::max(desired_length, this->value_.find_last_not_of(static_cast<char>(0)) + 1);
+        if (delete_from >= this->value_.size()) {
+            return;
+        }
+        this->value_.erase(this->value_.begin() + delete_from, this->value_.end());
+        return;
     }
-}
-BigInt BigInt::addLeadingZerosToLength(size_t desired_length) const {
-    BigInt result(this->value_, true);
-    result.value_.insert(0, desired_length - result.length(), static_cast<char>(0));
-    return result;
-}
-std::pair<BigInt, BigInt> BigInt::split(size_t part_length) const {
-    size_t middle_index = this->length() - part_length;
-    BigInt part1(this->value_.substr(0, middle_index), true),
-        part2(this->value_.substr(middle_index), true);
-    return std::make_pair(part1, part2);
+    this->value_.append(desired_length - this->value_.size(), static_cast<char>(0));
 }
 
-BigInt operator+(const BigInt& left, const BigInt& right) {
-    BigInt result;
-    const BigInt* term_ptr;
-    if (left.length() > right.length()) {
-        result = left;
-        term_ptr = &right;
-    } else {
-        result = right;
-        term_ptr = &left;
+BigInt& BigInt::operator*=(const BigInt& right) {
+    if (this->value_.size() < 10 && right.value_.size() < 10) {
+        int64_t result = static_cast<int64_t>(std::stoi(this->value())) *
+                         static_cast<int64_t>(std::stoi(right.value()));
+        this->value_ = std::to_string(result);
+        BigInt::stringFormat(this->value_);
+        return *this;
     }
-    const BigInt& term = *term_ptr;
-    // now result is not smaller than term
+    size_t part_size = (std::max(this->value_.size(), right.value_.size()) + 1) / 2;
+    this->normalizeToLength(2 * part_size);
+    right.normalizeToLength(2 * part_size);
+    BigInt b(this->value_.substr(0, part_size), true), a(this->value_.substr(part_size), true);
+    BigInt d(right.value_.substr(0, part_size), true), c(right.value_.substr(part_size), true);
+    BigInt ac = a, bd = b;
+    ac *= c;
+    bd *= d;
+    a += b;
+    c += d;
+    ac.normalizeToLength(2 * part_size);
+    bd.normalizeToLength(2 * part_size);
+
+    this->value_ = bd.value_ + ac.value_;
+    a *= c;
+    ac += bd;
+    a -= ac;
+    this->inplaceSum(a, part_size);
+
+    this->normalizeToLength(1);
+    right.normalizeToLength(1);
+    return *this;
+}
+
+BigInt& BigInt::operator+=(const BigInt& right) {
+    this->inplaceSum(right);
+    return *this;
+}
+void BigInt::inplaceSum(const BigInt& right, size_t offset) {
     int extra = 0;
-    std::string::reverse_iterator result_it = result.value_.rbegin();
-    for (std::string::const_reverse_iterator term_it = term.value_.crbegin();
-         term_it != term.value_.crend(); ++term_it, ++result_it) {
-        int sum = *result_it + *term_it + extra;
+    this->normalizeToLength(std::max(right.value_.size(), this->value_.size()) + 1);
+    std::string::iterator this_it = this->value_.begin() + offset;
+    for (std::string::const_iterator right_it = right.value_.begin();
+         right_it != right.value_.end(); ++right_it, ++this_it) {
+        int sum = *this_it + *right_it + extra;
         extra = sum / 10;
         sum %= 10;
-        *result_it = sum;
+        *this_it = sum;
     }
-    for (; extra != 0 && result_it != result.value_.rend(); result_it++) {
-        int sum = *result_it + extra;
+    for (; extra != 0 && this_it != this->value_.end(); ++this_it) {
+        int sum = *this_it + extra;
         extra = sum / 10;
         sum %= 10;
-        *result_it = sum;
+        *this_it = sum;
     }
-    if (extra != 0) {
-        result.value_.insert(result.value_.begin(), extra);
-    }
-    return result;
+    this->normalizeToLength(1);
 }
 
-BigInt operator-(BigInt left, const BigInt& right)  // left must be bigger than right
-{
-    std::string::reverse_iterator left_it = left.value_.rbegin();
-    for (std::string::const_reverse_iterator right_it = right.value_.crbegin();
-         right_it != right.value_.crend(); ++right_it, ++left_it) {
-        int result = (*left_it) - (*right_it);
+BigInt& BigInt::operator-=(const BigInt& right) {
+    std::string::iterator this_it = this->value_.begin();
+    for (std::string::const_iterator right_it = right.value_.begin();
+         right_it != right.value_.end(); ++right_it, ++this_it) {
+        int result = (*this_it) - (*right_it);
         if (result < 0) {
             result += 10;
-            (*(left_it + 1))--;
+            (*(this_it + 1))--;
         }
-        *left_it = result;
+        *this_it = result;
     }
-    for (; left_it != left.value_.rend() && *left_it < 0; left_it++) {
-        *left_it += 10;
-        (*(left_it + 1))--;
+    for (; this_it != this->value_.end() && *this_it < 0; this_it++) {
+        *this_it += 10;
+        (*(this_it + 1))--;
     }
-    left.removeLeadingZeros();
-    return left;
-}
-
-BigInt operator*(const BigInt& left, const BigInt& right) {
-    if (left.length() < 10 && right.length() < 10) {
-        int64_t result = static_cast<int64_t>(std::stoi(left.value())) *
-                         static_cast<int64_t>(std::stoi(right.value()));
-        return (std::to_string(result));
-    }
-    size_t parts_length = (std::max(left.length(), right.length()) + 1) / 2;
-    auto [a, b] = left.addLeadingZerosToLength(parts_length * 2).split(parts_length);
-    auto [c, d] = right.addLeadingZerosToLength(parts_length * 2).split(parts_length);
-    BigInt result1 = a * c, result2 = b * d;
-    BigInt result = result1 * (2 * parts_length) +
-                    ((a + b) * (c + d) - result1 - result2) * parts_length + result2;
-    result.removeLeadingZeros();
-    return result;
-}
-BigInt operator*(BigInt left, unsigned int power_of_10) {
-    left.value_.append(power_of_10, static_cast<char>(0));
-    return left;
+    this->normalizeToLength(1);
+    return *this;
 }
 
 int main(void) {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
     BigInt number1, number2;
     std::cin >> number1 >> number2;
-    std::cout << number1 * number2;
-
+    number1 *= number2;
+    std::cout << number1;
     return 0;
 }

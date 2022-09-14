@@ -46,6 +46,9 @@
         "deque": "cpp",
         "algorithm": "cpp",
         "stack": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "charconv": "cpp",
+        "map": "cpp",
+        "xtree": "cpp"
     }
 }

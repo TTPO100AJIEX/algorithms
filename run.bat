@@ -4,7 +4,7 @@ set solution_file=week1\4\index.cpp
 ECHO F | xcopy %solution_file% solution_save.cpp
 
 clang-format -i %solution_file%
-clang-tidy %solution_file% -fix-errors --
+clang-tidy %solution_file% -fix-errors
 g++ %index_file% -fno-sanitize-recover=all -std=c++17 -O2 -Wall -Werror -Wsign-compare -o solution.exe
 
 ren %solution_file% formatted.cpp

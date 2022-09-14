@@ -1,151 +1,117 @@
 #include <iostream>
-#include <string>
-#include <algorithm>
-#include <utility>
+#include <vector>
 #include <cstdint>
 
 class BigInt
 {
 public:
+    static inline std::pair <uint8_t, uint8_t> split_pair(uint8_t pair);
+    static inline uint8_t merge_pair(uint8_t low, uint8_t high);
+
     BigInt() = default;
-    BigInt(const std::string& value, bool normalized = false);
 
-    size_t length() const { return this->value_.size(); }
-    std::string value() const;
+    inline size_t length() const;
     
-	friend std::istream& operator>> (std::istream& os, BigInt& e);
-	friend std::ostream& operator<< (std::ostream& os, const BigInt& e);
-
-    friend BigInt operator+ (const BigInt& left, const BigInt& right);
-    friend BigInt operator- (BigInt left, const BigInt& right); //left must be bigger than right
-    friend BigInt operator* (const BigInt& left, const BigInt& right);
-    friend BigInt operator* (BigInt left, unsigned int power_of_10);
+    friend std::istream& operator>> (std::istream& outstream, BigInt& number);
+    friend std::ostream& operator<< (std::ostream& outstream, const BigInt& number);
+    
+    BigInt& operator+= (const BigInt& right);
+    friend BigInt operator+ (BigInt left, const BigInt& right);
 
 private:
-    std::string value_ = "";
+    mutable std::vector <uint8_t> value_;
 
-    void remove_leading_zeros();
-    BigInt add_leading_zeros_to_length(size_t desired_length) const;
-    std::pair <BigInt, BigInt> split(size_t part_length) const;
+    inline void normalize(size_t desired_length) const;
 };
 
-BigInt::BigInt(const std::string& value, bool normalized) : value_(value)
+inline std::pair <uint8_t, uint8_t> BigInt::split_pair(uint8_t pair)
 {
-    if (normalized) return;
-    for (std::string::iterator it = this->value_.begin(); it != this->value_.end(); it++) *it -= '0';
+    return std::make_pair(pair >> 4, pair & 0xf);
+}
+inline uint8_t BigInt::merge_pair(uint8_t low, uint8_t high)
+{
+    return(high + (low << 4));
 }
 
-std::string BigInt::value() const
+inline size_t BigInt::length() const
 {
-    std::string value = this->value_;
-    for (std::string::iterator it = value.begin(); it != value.end(); it++) (*it) += '0';
-    return(value);
+    uint8_t last_digit = (this->value_.back() << 4);
+    return(2 * this->value_.size() - (last_digit == 0));
 }
 
-std::istream& operator>> (std::istream& instream, BigInt& number)
+std::istream& operator>>(std::istream& instream, BigInt& number)
 {
-    instream >> number.value_;
-    for (std::string::iterator it = number.value_.begin(); it != number.value_.end(); it++) *it -= '0';
+    std::string value;
+    instream >> value;
+    number.value_.reserve((value.size() + 1) >> 1);
+    for (std::string::reverse_iterator read_it = value.rbegin(); read_it != value.rend(); ++read_it)
+    {
+        uint8_t low = *read_it - '0', high = read_it + 1 == value.rend() ? 0 : *(++read_it) - '0';
+        number.value_.push_back(BigInt::merge_pair(low, high));
+    }
     return instream;
 }
-std::ostream& operator<< (std::ostream& outstream, const BigInt& number)
+std::ostream& operator<<(std::ostream& outstream, const BigInt& number)
 {
-    for (std::string::const_iterator it = number.value_.cbegin(); it != number.value_.cend(); it++) outstream << (char)(*it + '0');
+    for (std::vector<uint8_t>::const_reverse_iterator iter = number.value_.rbegin(); iter != number.value_.rend(); ++iter)
+    {
+        auto [ low, high ] = BigInt::split_pair(*iter);
+        outstream << (unsigned int)(high) << (unsigned int)(low);
+    }
     return outstream;
 }
 
-void BigInt::remove_leading_zeros()
+inline void BigInt::normalize(size_t desired_length) const
 {
-    this->value_.erase(0, this->value_.find_first_not_of((char)(0)));
-    if (this->length() == 0) { this->value_ = "0"; this->value_[0] -= '0'; }
-}
-BigInt BigInt::add_leading_zeros_to_length(size_t desired_length) const
-{
-    BigInt result(this->value_, true);
-    result.value_.insert(0, desired_length - result.length(), (char)(0));
-    return result;
-}
-std::pair <BigInt, BigInt> BigInt::split(size_t part_length) const
-{
-    size_t middle_index = this->length() - part_length;
-    BigInt part1(this->value_.substr(0, middle_index), true), part2(this->value_.substr(middle_index), true);
-    return std::make_pair(part1, part2);
+    desired_length = (desired_length + 1) >> 1;
+    if (desired_length <= this->value_.size())
+    {
+        while (this->value_.back() == 0 && desired_length < this->value_.size()) this->value_.pop_back();
+        return;
+    }
+    this->value_.resize(desired_length);
 }
 
-BigInt operator+ (const BigInt& left, const BigInt& right)
+BigInt& BigInt::operator+= (const BigInt& right)
 {
-    BigInt result;
-    const BigInt* term_ptr;
-    if (left.length() > right.length()) { result = left; term_ptr = &right; }
-    else { result = right; term_ptr = &left; }
-    const BigInt& term = *term_ptr;
-    //now result is not smaller than term
-    int extra = 0;
-    std::string::reverse_iterator result_it = result.value_.rbegin();
-    for (std::string::const_reverse_iterator term_it = term.value_.crbegin(); term_it != term.value_.crend(); ++term_it, ++result_it)
+    this->normalize(std::max(right.length(), this->length()) + 1);
+    uint8_t extra = 0;
+    std::vector<uint8_t>::iterator this_it = this->value_.begin();
+    for (std::vector<uint8_t>::iterator right_it = right.value_.begin(); right_it != right.value_.end(); ++right_it, ++this_it)
     {
-        int sum = *result_it + *term_it + extra;
-        extra = sum / 10; sum %= 10;
-        *result_it = sum;
-    }
-    for ( ; extra != 0 && result_it != result.value_.rend(); result_it++)
-    {
-        int sum = *result_it + extra;
-        extra = sum / 10; sum %= 10;
-        *result_it = sum;
-    }
-    if (extra != 0) result.value_.insert(result.value_.begin(), extra);
-    return result;
-}
-
-BigInt operator- (BigInt left, const BigInt& right) //left must be bigger than right
-{
-    std::string::reverse_iterator left_it = left.value_.rbegin();
-    for (std::string::const_reverse_iterator right_it = right.value_.crbegin(); right_it != right.value_.crend(); ++right_it, ++left_it)
-    {
-        int result = (*left_it) - (*right_it);
-        if (result < 0)
+        auto [ this_low, this_high ] = BigInt::split_pair(*this_it);
+        auto [ right_low, right_high ] = BigInt::split_pair(*right_it);
+        this_low += right_low + extra;
+        extra = 0;
+        if (this_low > 9)
         {
-            result += 10;
-            (*(left_it + 1))--;
+            this_low += 6;
+            this_low &= 0xf;
+            extra = 1;
         }
-        *left_it = result;
+        this_high += right_high + extra;
+        extra = 0;
+        if (this_high > 9)
+        {
+            this_high += 9;
+            this_high &= 0xf;
+            extra = 1;
+        }
+        *this_it = BigInt::merge_pair(this_low, this_high);
     }
-    for ( ; left_it != left.value_.rend() && *left_it < 0; left_it++)
-    {
-        *left_it += 10;
-        (*(left_it + 1))--;
-    }
-    left.remove_leading_zeros();
-    return left;
+    this->normalize(1);
+    return *this;
 }
-
-BigInt operator* (const BigInt& left, const BigInt& right)
-{
-    if (left.length() < 10 && right.length() < 10)
-    {
-        int64_t result = (int64_t)(std::stoi(left.value())) * (int64_t)(std::stoi(right.value()));
-        return(std::to_string(result));
-    }
-    size_t parts_length = (std::max(left.length(), right.length()) + 1) / 2;
-    auto [ a, b ] = left.add_leading_zeros_to_length(parts_length * 2).split(parts_length);
-    auto [ c, d ] = right.add_leading_zeros_to_length(parts_length * 2).split(parts_length);
-    BigInt result1 = a * c, result2 = b * d;
-    BigInt result = result1 * (2 * parts_length) + ( (a + b) * (c + d) - result1 - result2 ) * parts_length + result2;
-    result.remove_leading_zeros();
-    return result;
-}
-BigInt operator* (BigInt left, unsigned int power_of_10)
-{
-    left.value_.append(power_of_10, (char)(0));
-    return left;
-}
+BigInt operator+ (BigInt left, const BigInt& right) { return left += right; }
 
 int main(void)
 {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    
     BigInt number1, number2;
     std::cin >> number1 >> number2;
-    std::cout << number1 * number2;
-
+    number1 += number2;
+    std::cout << number1;
     return 0;
 }
