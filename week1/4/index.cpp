@@ -1,117 +1,100 @@
+/*
+    did some extra reading:
+    https://chromium.googlesource.com/v8/v8.git/+/refs/heads/main/src/bigint/ - google's
+   implementation of BigInt https://ru.algorithmica.org/cs/algebra/karatsuba/ - more theory on how
+   to use karatsuba algorithm for multiplication of polynomials
+*/
 #include <iostream>
-#include <vector>
-#include <cstdint>
 
-class BigInt
-{
-public:
-    static inline std::pair <uint8_t, uint8_t> split_pair(uint8_t pair);
-    static inline uint8_t merge_pair(uint8_t low, uint8_t high);
-
-    BigInt() = default;
-
-    inline size_t length() const;
-    
-    friend std::istream& operator>> (std::istream& outstream, BigInt& number);
-    friend std::ostream& operator<< (std::ostream& outstream, const BigInt& number);
-    
-    BigInt& operator+= (const BigInt& right);
-    friend BigInt operator+ (BigInt left, const BigInt& right);
-
-private:
-    mutable std::vector <uint8_t> value_;
-
-    inline void normalize(size_t desired_length) const;
-};
-
-inline std::pair <uint8_t, uint8_t> BigInt::split_pair(uint8_t pair)
-{
-    return std::make_pair(pair >> 4, pair & 0xf);
-}
-inline uint8_t BigInt::merge_pair(uint8_t low, uint8_t high)
-{
-    return(high + (low << 4));
-}
-
-inline size_t BigInt::length() const
-{
-    uint8_t last_digit = (this->value_.back() << 4);
-    return(2 * this->value_.size() - (last_digit == 0));
-}
-
-std::istream& operator>>(std::istream& instream, BigInt& number)
-{
-    std::string value;
-    instream >> value;
-    number.value_.reserve((value.size() + 1) >> 1);
-    for (std::string::reverse_iterator read_it = value.rbegin(); read_it != value.rend(); ++read_it)
-    {
-        uint8_t low = *read_it - '0', high = read_it + 1 == value.rend() ? 0 : *(++read_it) - '0';
-        number.value_.push_back(BigInt::merge_pair(low, high));
-    }
-    return instream;
-}
-std::ostream& operator<<(std::ostream& outstream, const BigInt& number)
-{
-    for (std::vector<uint8_t>::const_reverse_iterator iter = number.value_.rbegin(); iter != number.value_.rend(); ++iter)
-    {
-        auto [ low, high ] = BigInt::split_pair(*iter);
-        outstream << (unsigned int)(high) << (unsigned int)(low);
-    }
-    return outstream;
-}
-
-inline void BigInt::normalize(size_t desired_length) const
-{
-    desired_length = (desired_length + 1) >> 1;
-    if (desired_length <= this->value_.size())
-    {
-        while (this->value_.back() == 0 && desired_length < this->value_.size()) this->value_.pop_back();
+void multiply(int32_t* src1, int32_t* src2, int32_t* dest, unsigned int size) {
+    if (size <= 34) {  // constant from google
+        for (unsigned int i = 0; i < size; i++) {
+            for (unsigned int j = 0; j < size; j++) {
+                dest[i + j] += src1[i] * src2[j];
+            }
+        }
         return;
     }
-    this->value_.resize(desired_length);
-}
-
-BigInt& BigInt::operator+= (const BigInt& right)
-{
-    this->normalize(std::max(right.length(), this->length()) + 1);
-    uint8_t extra = 0;
-    std::vector<uint8_t>::iterator this_it = this->value_.begin();
-    for (std::vector<uint8_t>::iterator right_it = right.value_.begin(); right_it != right.value_.end(); ++right_it, ++this_it)
-    {
-        auto [ this_low, this_high ] = BigInt::split_pair(*this_it);
-        auto [ right_low, right_high ] = BigInt::split_pair(*right_it);
-        this_low += right_low + extra;
-        extra = 0;
-        if (this_low > 9)
-        {
-            this_low += 6;
-            this_low &= 0xf;
-            extra = 1;
-        }
-        this_high += right_high + extra;
-        extra = 0;
-        if (this_high > 9)
-        {
-            this_high += 9;
-            this_high &= 0xf;
-            extra = 1;
-        }
-        *this_it = BigInt::merge_pair(this_low, this_high);
+    int part_size = (size >> 1);
+    int32_t* sum1 = static_cast<int32_t*>(malloc(part_size * sizeof(int32_t)));
+    int32_t* sum2 = static_cast<int32_t*>(malloc(part_size * sizeof(int32_t)));
+    int32_t* abcd = static_cast<int32_t*>(calloc(size, sizeof(int32_t)));
+    for (int i = 0; i < part_size; i++) {
+        sum1[i] = src1[i] + src1[part_size + i];
+        sum2[i] = src2[i] + src2[part_size + i];
     }
-    this->normalize(1);
-    return *this;
+    multiply(sum1, sum2, abcd, part_size);
+    free(sum1);
+    free(sum2);
+    multiply(src1, src2, dest, part_size);
+    multiply(src1 + part_size, src2 + part_size, dest + size, part_size);
+    for (int i = 0; i < size; i++) {
+        abcd[i] -= (dest[i] + dest[size + i]);
+    }
+    for (int i = 0; i < size; i++) {
+        dest[part_size + i] += abcd[i];
+    }
+    free(abcd);
 }
-BigInt operator+ (BigInt left, const BigInt& right) { return left += right; }
 
-int main(void)
-{
+// #include <fstream>
+// #include <chrono>
+int main(void) {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
-    
-    BigInt number1, number2;
-    std::cin >> number1 >> number2;
-    number1 += number2;
-    std::cout << number1;
-    return 0;
+
+    // std::ifstream fin("input5.txt");
+    // std::chrono::high_resolution_clock::time_point now1 =
+    // std::chrono::high_resolution_clock::now();
+
+    std::string val1, val2;
+    std::cin >> val1 >> val2;
+    // fin >> val1 >> val2;
+    unsigned int input_size = std::max(val1.size(), val2.size()) - 1, size = 2;
+    while (input_size >>= 1) {
+        size <<= 1;
+    }
+    int32_t* num1 = static_cast<int32_t*>(malloc(size * sizeof(int32_t)));
+    int32_t* num2 = static_cast<int32_t*>(malloc(size * sizeof(int32_t)));
+    unsigned int ind = 0;
+    for (std::string::reverse_iterator iter = val1.rbegin(); iter != val1.rend(); iter++) {
+        num1[ind] = (*iter) - '0';
+        ind++;
+    }
+    for (; ind < size; ind++) {
+        num1[ind] = 0;
+    }
+    ind = 0;
+    for (std::string::reverse_iterator iter = val2.rbegin(); iter != val2.rend(); iter++) {
+        num2[ind] = (*iter) - '0';
+        ind++;
+    }
+    for (; ind < size; ind++) {
+        num2[ind] = 0;
+    }
+    unsigned int res_size = (size << 1);
+    int32_t* res = static_cast<int32_t*>(calloc(res_size, sizeof(int32_t)));
+    multiply(num1, num2, res, size);
+    for (unsigned int i = 0; i < res_size - 1; i++) {
+        res[i + 1] += res[i] / 10;
+        res[i] %= 10;
+        if (res[i] < 0) {
+            res[i] += 10;
+            res[i + 1]--;
+        }
+    }
+    ind = res_size - 1;
+    while (res[ind] == 0 && ind > 0) {
+        ind--;
+    }
+    for (int i = ind; i >= 0; i--) {
+        std::cout << res[i];
+    }
+    free(num1);
+    free(num2);
+    free(res);
+
+    // std::chrono::high_resolution_clock::time_point now2 =
+    // std::chrono::high_resolution_clock::now(); std::cout << std::endl << std::endl; std::cout <<
+    // size << ": " << double((now2 - now1).count()) / 1000000 << "ms" << std::endl;
 }
