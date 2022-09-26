@@ -48,13 +48,13 @@ void List::output()
         std::cout << now->data << " ";
         now = now->next;
     } while(now != this->head);
-    std::cout << "$" << this->tail->data << "$" << " | ";
+    std::cout << "$" << this->head->data << " " << this->tail->data << "$" << " | ";
     do
     {
         std::cout << now->data << " ";
         now = now->next;
     } while(now != this->head);
-    std::cout << "$" << this->tail->data << "$" << std::endl;
+    std::cout << "$" << this->head->data << " " << this->tail->data << "$" << " | " << std::endl;
 }
 
 List::List(int* values, size_t size)
@@ -77,15 +77,15 @@ List::~List()
 int List::pop() { return this->pop_explicit(this->head); }
 int List::pop(size_t position)
 {
-    if (this->head == nullptr) throw std::runtime_error("Can not pop such element!");
+    if (this->head == nullptr) throw std::runtime_error("Wrong Position!");
     Node* node = this->head;
     for ( ; position != 0; position--)
     {
         node = node->next;
-        if (node == this->head) throw std::runtime_error("Can not pop such element!");
+        if (node == this->head) throw std::runtime_error("Wrong Position!");
     }
     node = node->next;
-    if (node == this->head) throw std::runtime_error("Can not pop such element!");
+    if (node == this->head || node == nullptr) throw std::runtime_error("Wrong Position!");
     return this->pop_explicit(node);
 }
 int List::pop_explicit(Node* node)
@@ -97,7 +97,7 @@ int List::pop_explicit(Node* node)
     else
     {
         if (node == this->head) this->head = node->next;
-        else if (node == this->tail) this->tail = node->previous;
+        if (node == this->tail) this->tail = node->previous;
     }
     int value = node->data;
     delete node;
