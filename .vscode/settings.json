@@ -66,6 +66,7 @@
         "list": "cpp",
         "array": "cpp",
         "stop_token": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "climits": "cpp"
     }
 }
