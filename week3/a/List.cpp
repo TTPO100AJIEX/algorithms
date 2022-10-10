@@ -1,5 +1,4 @@
 #include <stdexcept>
-#include <iostream>
 
 class Node
 {
@@ -11,7 +10,6 @@ public:
     Node() = default;
     Node(int data);
 };
-
 Node::Node(int data)
 {
     if (data < -2e9 || data > 2e9) throw std::runtime_error("Wrong Value!");
@@ -40,21 +38,21 @@ public:
     void output();
 };
 
-void List::output()
-{
+#include <iostream>
+void List::output() {
     Node* now = this->head;
-    do
-    {
+    do {
         std::cout << now->data << " ";
         now = now->next;
-    } while(now != this->head);
-    std::cout << "$" << this->head->data << " " << this->tail->data << "$" << " | ";
-    do
-    {
+    } while (now != this->head);
+    std::cout << "$" << this->head->data << " " << this->tail->data << "$"
+              << " | ";
+    do {
         std::cout << now->data << " ";
         now = now->next;
-    } while(now != this->head);
-    std::cout << "$" << this->head->data << " " << this->tail->data << "$" << " | " << std::endl;
+    } while (now != this->head);
+    std::cout << "$" << this->head->data << " " << this->tail->data << "$"
+              << " | " << std::endl;
 }
 
 List::List(int* values, size_t size)
@@ -76,7 +74,14 @@ List::List(int* values, size_t size)
 
 List::~List()
 {
-    while (this->head != nullptr) this->pop_explicit(this->head);
+    Node* head = this->head;
+    if (head == nullptr) return;
+    do
+    {
+        Node* next = head->next;
+        delete head;
+        head = next;
+    } while (head != this->head);
 }
 
 int List::pop() { return this->pop_explicit(this->head); }
@@ -141,26 +146,16 @@ void List::push(int value, size_t position)
 }
 void List::push_explicit(Node* new_node, Node* push_after)
 {
-    if (push_after == nullptr)
+    if (push_after == nullptr && this->head == nullptr)
     {
-        if (this->head == nullptr)
-        {
-            new_node->next = new_node->previous = new_node;
-            this->head = this->tail = new_node;
-        }
-        else
-        {
-            new_node->next = this->head;
-            new_node->previous = this->tail;
-            this->head->previous = new_node;
-            this->tail->next = new_node;
-            this->head = new_node;
-        }
+        new_node->next = new_node->previous = new_node;
+        this->head = this->tail = new_node;
         return;
     }
+    if (push_after == this->tail) this->tail = new_node;
+    if (push_after == nullptr) { push_after = this->tail; this->head = new_node; }
     new_node->previous = push_after;
     new_node->next = push_after->next;
     push_after->next->previous = new_node;
     push_after->next = new_node;
-    if (push_after == this->tail) this->tail = new_node;
 }

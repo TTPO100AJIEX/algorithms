@@ -3,9 +3,8 @@
 int main(void)
 {
     List list2;
-    std::cout << list2.pop(0) << std::endl;
 
-    int* test = (int*)(calloc(3, sizeof(int)));
+    /*int* test = (int*)(calloc(3, sizeof(int)));
     test[0] = 1; test[1] = 2; test[2] = 3;
     List list(test, 3);
     //list.pushBack(1);
@@ -17,6 +16,6 @@ int main(void)
     list.output();
     std::cout << list.pop(1) << std::endl;
     std::cout << list.pop(0) << std::endl;
-    list.output();
+    list.output();*/
     return 0;
 }
