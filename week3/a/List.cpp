@@ -59,13 +59,18 @@ void List::output()
 
 List::List(int* values, size_t size)
 {
-    for (size_t i = 0; i < size; i++)
+    /*for (size_t i = 0; i < size; i++)
     {
         if (values[i] < -2e9 || values[i] > 2e9) throw std::runtime_error("Wrong Value!");
-    }
+    }*/
     for (size_t i = 0; i < size; i++)
     {
-        this->pushBack(values[i]);
+        try { this->pushBack(values[i]); }
+        catch (const std::exception& exception)
+        {
+            while (this->head != nullptr) this->pop_explicit(this->head);
+            throw exception;
+        }
     }
 }
 

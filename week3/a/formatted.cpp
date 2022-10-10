@@ -14,7 +14,7 @@ public:
 Node::Node(int data) {
     if (data < -2e9 || data > 2e9) {
         throw std::runtime_error("Wrong Value!");
-    }
+}
     this->data = data;
 }
 
@@ -56,20 +56,26 @@ void List::output() {
 }
 
 List::List(int* values, size_t size) {
+    /*for (size_t i = 0; i < size; i++)
+    {
+        if (values[i] < -2e9 || values[i] > 2e9) throw std::runtime_error("Wrong Value!");
+    }*/
     for (size_t i = 0; i < size; i++) {
-        if (values[i] < -2e9 || values[i] > 2e9) {
-            throw std::runtime_error("Wrong Value!");
+        try {
+            this->pushBack(values[i]);
+        } catch (const std::exception& exception) {
+            while (this->head != nullptr) {
+                this->popExplicit(this->head);
+}
+            throw exception;
         }
-    }
-    for (size_t i = 0; i < size; i++) {
-        this->pushBack(values[i]);
     }
 }
 
 List::~List() {
     while (this->head != nullptr) {
         this->popExplicit(this->head);
-    }
+}
 }
 
 int List::pop() {
@@ -78,24 +84,24 @@ int List::pop() {
 int List::pop(size_t position) {
     if (this->head == nullptr) {
         throw std::runtime_error("Wrong Position!");
-    }
+}
     Node* node = this->head;
     for (; position != 0; position--) {
         node = node->next;
         if (node == this->head) {
             throw std::runtime_error("Wrong Position!");
-        }
+}
     }
     node = node->next;
     if (node == this->head || node == nullptr) {
         throw std::runtime_error("Wrong Position!");
-    }
+}
     return this->popExplicit(node);
 }
 int List::popExplicit(Node* node) {
     if (node == nullptr) {
         throw std::runtime_error("Can not pop such element!");
-    }
+}
     node->next->previous = node->previous;
     node->previous->next = node->next;
     if (node == this->head && node == this->tail) {
@@ -103,10 +109,10 @@ int List::popExplicit(Node* node) {
     } else {
         if (node == this->head) {
             this->head = node->next;
-        }
+}
         if (node == this->tail) {
             this->tail = node->previous;
-        }
+}
     }
     int value = node->data;
     delete node;
@@ -157,5 +163,5 @@ void List::pushExplicit(Node* new_node, Node* push_after) {
     push_after->next = new_node;
     if (push_after == this->tail) {
         this->tail = new_node;
-    }
+}
 }

@@ -1,5 +1,5 @@
-set index_file=week3\a\index.cpp
-set solution_file=week3\a\List.cpp
+set index_file=week4\d\index.cpp
+set solution_file=week4\d\index.cpp
 
 ECHO F | xcopy %solution_file% solution_save.cpp
 
