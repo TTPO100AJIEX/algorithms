@@ -93,6 +93,7 @@
         "string_view": "cpp",
         "unordered_map": "cpp",
         "variant": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "xhash": "cpp"
     }
 }

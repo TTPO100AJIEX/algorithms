@@ -12,14 +12,14 @@ public:
     void pop();
 
 private:
-    void pushToStack(elements_type value, int stack_index);
+    void pushToStack(elements_type value, bool stack_index);
 
     std::stack < std::pair <elements_type, elements_type> > push_stack; 
     std::stack < std::pair <elements_type, elements_type> > pop_stack;
 };
 
 template<typename elements_type>
-void MinimumQueue<elements_type>::pushToStack(elements_type value, int stack_index)
+void MinimumQueue<elements_type>::pushToStack(elements_type value, bool stack_index)
 {
     std::stack< std::pair <elements_type, elements_type> >& stack = (stack_index == 1) ? this->push_stack : this->pop_stack;
     elements_type current_minimum = value;

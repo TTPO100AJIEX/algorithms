@@ -3,8 +3,8 @@
 
 int main(void)
 {
-    //std::ios::sync_with_stdio(false);
-    //std::cin.tie(nullptr);
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
 
     unsigned int n;
     std::cin >> n;
