@@ -15,156 +15,117 @@ private:
     std::list<int> data;
     std::vector< std::pair<int, std::list<int>::iterator> > parts;
 
+    void full_build();
+
 public:
     RootDecomposition(Operation operation, int mod, std::istream& instream);
     
     void insert(unsigned int index, int value);
     void erase(unsigned int index);
     void change(unsigned int index, int value);
-    int at(unsigned int index);
-    int compute(unsigned int left, unsigned int right);
-    unsigned int size();
-    void print();
+    
+    int at(unsigned int index) const;
+    int compute(unsigned int left, unsigned int right) const;
+    unsigned int size() const;
 };
 
 RootDecomposition::RootDecomposition(Operation operation, int mod, std::istream& instream) : operation(operation), mod(mod)
 {
-    unsigned int size; std::cin >> size;
-    this->parts.resize(sqrt(size) + 1, { 0, this->data.end() });
-    std::list<int>::iterator last_element = this->data.begin();
-    for (unsigned int i = 0; i < size; i++)
+    unsigned int size; std::cin >> size; int number;
+    for (unsigned int i = 0; i < size; i++) { instream >> number; this->data.push_back(number); }
+    this->full_build();
+}
+void RootDecomposition::full_build()
+{
+    unsigned int data_size = this->data.size(), parts_size = sqrt(data_size) + 1;
+    this->parts.resize(parts_size); this->parts[parts_size - 1] = { 0, this->data.end() };
+    std::list<int>::iterator current = this->data.begin();
+    for (unsigned int i = 0, part = -1; i < data_size; i++, current++)
     {
-        int number; instream >> number;
-        this->data.push_back(number);
-        if (i == 0) last_element = this->data.begin();
-        else last_element++;
-        if (i % this->parts.size() == 0) this->parts[i / this->parts.size()] = { 0, last_element };
-        if (this->operation == Operation::SUM) this->parts[i / this->parts.size()].first = (this->parts[i / this->parts.size()].first + number) % this->mod;
-        if (this->operation == Operation::XOR) this->parts[i / this->parts.size()].first ^= number;
+        if (i % parts_size == 0) this->parts[++part] = { *current, current };
+        else
+        {
+            std::pair<int, std::list<int>::iterator>& part_obj = this->parts[part];
+            if (this->operation == Operation::SUM) part_obj.first = (part_obj.first + *current) % this->mod;
+            else part_obj.first ^= *current;
+        }
     }
 }
 
 void RootDecomposition::insert(unsigned int index, int value)
 {
-    unsigned int part = index / this->parts.size(); index %= this->parts.size();
-    std::list<int>::iterator it = this->parts[part].second;
-    bool on_split_point = false;
-    if (index == 0) on_split_point = true;
-    while ((index--) != 0) it++;
-    it = this->data.insert(it, value);
+    unsigned int data_size = this->data.size(), parts_size = this->parts.size();
+    unsigned int part = index / parts_size; index %= parts_size;
+    bool on_split_point = (index == 0);
+    std::list<int>::iterator inserted = this->parts[part].second;
+    while ((index--) != 0) inserted++;
+    inserted = this->data.insert(inserted, value);
+    //if (parts_size * parts_size <= ++data_size) { full_build(); return; } //TODO <= to <
+    unsigned int new_part_size = sqrt(data_size + 1) + 1;
+    if (new_part_size != parts_size) { full_build(); return; }
 
-    unsigned int new_part_size = sqrt(this->data.size()) + 1;
-    if (new_part_size != this->parts.size())
+    for ( ; part < parts_size; part++)
     {
-        //full rebuild in O(n)
-        this->parts.resize(new_part_size);
-        for (unsigned int i = 0; i < this->parts.size(); i++) this->parts[i] = { 0, this->data.end() };
-        std::list<int>::iterator last_element = this->data.begin();
-        for (unsigned int i = 0; i < this->data.size(); i++, last_element++)
-        {
-            if (i % this->parts.size() == 0) this->parts[i / this->parts.size()] = { 0, last_element };
-            if (this->operation == Operation::SUM) this->parts[i / this->parts.size()].first = (this->parts[i / this->parts.size()].first + (*last_element)) % this->mod;
-            if (this->operation == Operation::XOR) this->parts[i / this->parts.size()].first ^= (*last_element);
-        }
-        return;
-    }
-    else
-    {
-        //fix in O(sqrt(n))
-        for ( ; part < this->parts.size(); part++)
-        {
-            // insert into part
-            if (on_split_point) this->parts[part].second = it;
-            if (this->operation == Operation::SUM) this->parts[part].first = (this->parts[part].first + (*it)) % this->mod;
-            if (this->operation == Operation::XOR) this->parts[part].first ^= (*it);
-            /*
-                4: [ 1 2 3 ] [ 4 - - ] [ - - - ] -> stop
-                5: [ 1 2 3 ] [ 4 5 - ] [ - - - ] -> stop
-                6: [ 1 2 3 ] [ 4 5 6 ] [ - - - ] 
-                7: [ 1 2 3 ] [ 4 5 6 ] [ 7 - - ] -> stop
-            */
-            if (part + 1 >= this->parts.size()) break; // case 7
-            if (this->parts[part + 1].second == this->data.end() && this->data.size() % this->parts.size() != 1) break; // case 4-5
+        std::pair<int, std::list<int>::iterator>& part_obj = this->parts[part];
+        if (on_split_point) part_obj.second = inserted;
+        if (this->operation == Operation::SUM) part_obj.first = (part_obj.first + *inserted) % this->mod;
+        else part_obj.first ^= *inserted;
 
-            it = this->parts[part + 1].second; it--;
-            if (this->operation == Operation::SUM) this->parts[part].first = (this->parts[part].first - (*it)) % this->mod;
-            if (this->operation == Operation::XOR) this->parts[part].first ^= (*it);
-            on_split_point = true;
-        }
+        if (part + 1 >= parts_size || (this->parts[part + 1].second == this->data.end() && data_size % parts_size != 1)) break;
+        inserted = this->parts[part + 1].second; inserted--;
+        if (this->operation == Operation::SUM) part_obj.first = (part_obj.first - *inserted) % this->mod;
+        if (this->operation == Operation::XOR) part_obj.first ^= *inserted;
+        on_split_point = true;
     }
 }
 void RootDecomposition::erase(unsigned int index)
 {
-    unsigned int part = index / this->parts.size(); index %= this->parts.size();
-    std::list<int>::iterator it = this->parts[part].second;
-    while ((index--) != 0) it++;
+    unsigned int data_size = this->data.size(), parts_size = this->parts.size();
+    unsigned int part = index / parts_size; index %= parts_size;
+    std::list<int>::iterator removed = this->parts[part].second;
+    while ((index--) != 0) removed++;
+    //if ((parts_size - 1) * (parts_size - 1) > --data_size) { full_build(); return; } //TODO > to >=
+    unsigned int new_part_size = sqrt(data_size - 1) + 1;
+    if (new_part_size != parts_size) { full_build(); return; }
 
-    unsigned int new_part_size = sqrt(this->data.size()) + 1;
-    if (new_part_size != this->parts.size())
+    std::list<int>::iterator to_erase = removed;
+    for ( ; part < parts_size; part++)
     {
-        this->data.erase(it);
-        //full rebuild in O(n)
-        this->parts.resize(new_part_size);
-        for (unsigned int i = 0; i < this->parts.size(); i++) this->parts[i] = { 0, this->data.end() };
-        std::list<int>::iterator last_element = this->data.begin();
-        for (unsigned int i = 0; i < this->data.size(); i++, last_element++)
-        {
-            if (i % this->parts.size() == 0) this->parts[i / this->parts.size()] = { 0, last_element };
-            if (this->operation == Operation::SUM) this->parts[i / this->parts.size()].first = (this->parts[i / this->parts.size()].first + (*last_element)) % this->mod;
-            if (this->operation == Operation::XOR) this->parts[i / this->parts.size()].first ^= (*last_element);
-        }
-        return;
-    }
-    else
-    {
-        //fix in O(sqrt(n))
-        std::list<int>::iterator save = it;
-        for ( ; part < this->parts.size(); part++)
-        {
-            if (it == this->parts[part].second) this->parts[part].second++;
-            if (this->operation == Operation::SUM) this->parts[part].first = (this->parts[part].first - (*it)) % this->mod;
-            if (this->operation == Operation::XOR) this->parts[part].first ^= (*it);
-            /*
-                5: [ 1 2 3 ] [ 4 5 - ] [ - - - ]
-                6: [ 1 2 3 ] [ 4 5 6 ] [ - - - ] 
-                7: [ 1 2 3 ] [ 4 5 6 ] [ 7 - - ]
-                8: [ 1 2 3 ] [ 4 5 6 ] [ 7 8 - ]
-            */
-            if (part + 1 >= this->parts.size()) break; // case 6-7
-            if (this->parts[part + 1].second == this->data.end()) break; // case 5-6
+        std::pair<int, std::list<int>::iterator>& part_obj = this->parts[part];
+        if (removed == part_obj.second) part_obj.second++;
+        if (this->operation == Operation::SUM) part_obj.first = (part_obj.first - *removed) % this->mod;
+        else part_obj.first ^= *removed;
 
-            it = this->parts[part + 1].second;
-            if (this->operation == Operation::SUM) this->parts[part].first = (this->parts[part].first + (*it)) % this->mod;
-            if (this->operation == Operation::XOR) this->parts[part].first ^= (*it);
-        }
-        this->data.erase(save);
+        if (part + 1 >= parts_size || this->parts[part + 1].second == this->data.end()) break;
+        removed = this->parts[part + 1].second;
+        if (this->operation == Operation::SUM) part_obj.first = (part_obj.first + *removed) % this->mod;
+        else part_obj.first ^= *removed;
     }
+    this->data.erase(to_erase);
 }
 void RootDecomposition::change(unsigned int index, int value)
 {
-    unsigned int part = index / this->parts.size(); index %= this->parts.size();
-    std::list<int>::iterator it = this->parts[part].second;
-    while ((index--) != 0) it++;
+    unsigned int parts_size = this->parts.size(), part = index / parts_size; index %= parts_size;
+    std::list<int>::iterator current = this->parts[part].second;
+    while ((index--) != 0) current++;
+
     if (this->operation == Operation::SUM)
     {
-        this->parts[part].first = (this->parts[part].first - *it) % this->mod;
+        this->parts[part].first = (this->parts[part].first - *current) % this->mod;
         this->parts[part].first = (this->parts[part].first + value) % this->mod;
     }
-    if (this->operation == Operation::XOR)
-    {
-        this->parts[part].first ^= *it;
-        this->parts[part].first ^= value;
-    }
-    *it = value;
+    else this->parts[part].first ^= *current ^ value;
+    *current = value;
 }
-int RootDecomposition::at(unsigned int index)
+
+int RootDecomposition::at(unsigned int index) const
 {
     unsigned int part = index / this->parts.size(); index %= this->parts.size();
     std::list<int>::iterator it = this->parts[part].second;
     while ((index--) != 0) it++;
     return(*it);
 }
-int RootDecomposition::compute(unsigned int left, unsigned int right)
+int RootDecomposition::compute(unsigned int left, unsigned int right) const
 {
     unsigned int left_part = left / this->parts.size(); left %= this->parts.size();
     std::list<int>::iterator left_it = this->parts[left_part].second;
@@ -207,19 +168,7 @@ int RootDecomposition::compute(unsigned int left, unsigned int right)
         return answer;
     }
 }
-unsigned int RootDecomposition::size() { return this->data.size(); }
-void RootDecomposition::print()
-{
-    std::cout << "------------------------------------\n";
-    for (std::list<int>::iterator it = this->data.begin(); it != this->data.end(); it++) std::cout << *it << " ";
-    std::cout << "\n";
-    for (std::vector< std::pair<int, std::list<int>::iterator> >::iterator it = this->parts.begin(); it != this->parts.end(); it++)
-    {
-        if (it->second != this->data.end()) std::cout << it->first << "|" << *(it->second) << " ";
-        else std::cout << it->first << "|end ";
-    }
-    std::cout << "------------------------------------\n";
-}
+unsigned int RootDecomposition::size() const { return this->data.size(); }
 
 int main(void)
 {
@@ -241,8 +190,6 @@ int main(void)
         if (command == "at") { std::cin >> i; std::cout << solver.at(i - 1) << "\n"; }
         if (command == "compute") { std::cin >> l >> r; std::cout << solver.compute(l - 1, r - 1) << "\n"; }
         if (command == "size") { std::cout << solver.size() << "\n"; }
-        
-        if (command == "print") { solver.print(); }
     }
 
     return 0;
