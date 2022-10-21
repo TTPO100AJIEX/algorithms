@@ -54,14 +54,14 @@ void RootDecomposition::full_build()
 
 void RootDecomposition::insert(unsigned int index, int value)
 {
-    unsigned int data_size = this->data.size(), parts_size = this->parts.size();
+    unsigned int parts_size = this->parts.size();
     unsigned int part = index / parts_size; index %= parts_size;
     bool on_split_point = (index == 0);
     std::list<int>::iterator inserted = this->parts[part].second;
     while ((index--) != 0) inserted++;
     inserted = this->data.insert(inserted, value);
     //if (parts_size * parts_size <= ++data_size) { full_build(); return; } //TODO <= to <
-    unsigned int new_part_size = sqrt(data_size + 1) + 1;
+    unsigned int new_part_size = sqrt(this->data.size()) + 1;
     if (new_part_size != parts_size) { full_build(); return; }
 
     for ( ; part < parts_size; part++)
@@ -71,7 +71,7 @@ void RootDecomposition::insert(unsigned int index, int value)
         if (this->operation == Operation::SUM) part_obj.first = (part_obj.first + *inserted) % this->mod;
         else part_obj.first ^= *inserted;
 
-        if (part + 1 >= parts_size || (this->parts[part + 1].second == this->data.end() && data_size % parts_size != 1)) break;
+        if (part + 1 >= parts_size || (this->parts[part + 1].second == this->data.end() && this->data.size() % parts_size != 1)) break;
         inserted = this->parts[part + 1].second; inserted--;
         if (this->operation == Operation::SUM) part_obj.first = (part_obj.first - *inserted) % this->mod;
         if (this->operation == Operation::XOR) part_obj.first ^= *inserted;
@@ -86,7 +86,7 @@ void RootDecomposition::erase(unsigned int index)
     while ((index--) != 0) removed++;
     //if ((parts_size - 1) * (parts_size - 1) > --data_size) { full_build(); return; } //TODO > to >=
     unsigned int new_part_size = sqrt(data_size - 1) + 1;
-    if (new_part_size != parts_size) { full_build(); return; }
+    if (new_part_size != parts_size) { this->data.erase(removed); full_build(); return; }
 
     std::list<int>::iterator to_erase = removed;
     for ( ; part < parts_size; part++)
@@ -114,7 +114,7 @@ void RootDecomposition::change(unsigned int index, int value)
         this->parts[part].first = (this->parts[part].first - *current) % this->mod;
         this->parts[part].first = (this->parts[part].first + value) % this->mod;
     }
-    else this->parts[part].first ^= *current ^ value;
+    else this->parts[part].first ^= (*current ^ value);
     *current = value;
 }
 
