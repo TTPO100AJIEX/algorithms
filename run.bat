@@ -1,5 +1,5 @@
-set index_file=extra1\a\index.cpp
-set solution_file=extra1\a\index.cpp
+set index_file=week6\b\index.cpp
+set solution_file=week6\b\AVLTree.cpp
 
 ECHO F | xcopy %solution_file% solution_save.cpp
 
