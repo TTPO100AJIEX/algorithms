@@ -1,6 +1,4 @@
 #include <cstdlib>
-#include <string>
-#include <iostream>
 
 struct Node
 {
@@ -8,8 +6,8 @@ struct Node
 private:
     Node* parent = nullptr;
 
-    bool IsLeftSon() const { return this->parent ? (this->parent->left == this) : false; }
-    bool IsRightSon() const { return this->parent ? (this->parent->right == this) : false; }
+    bool IsLeftSon() const { return (this->parent ? (this->parent->left == this) : false); }
+    bool IsRightSon() const { return (this->parent ? (this->parent->right == this) : false); }
     
     void recalculate_height()
     {
@@ -39,8 +37,6 @@ private:
     Node* rotation(Node* root, Rotations type);
     void fix_balance(Node* root);
 
-    int* find(Node* root, int value) const;
-    int* lowerBound(Node* root, int value) const;
     void traverse_to_buffer(Node* root, int* buffer, int* filled_length) const;
 
 public:
@@ -58,81 +54,17 @@ public:
     void erase(int value);
 
     Node* getRoot() const { return this->root; }
-    int getHeight() const { return this->root ? this->root->height : 0; }
+    int getHeight() const { return (this->root ? this->root->height : 0); }
     int getSize() const { return this->size; }
-    bool empty() const { return (!this->root); }
+    bool empty() const { return (this->size == 0); }
 
-    int* find(int value) const { return this->find(this->root, value); }
-    int* lowerBound(int value) const { return this->lowerBound(this->root, value); }
+    const int* find(int value) const;
+    const int* lowerBound(int value) const;
     int* traversal() const;
-
-
-
-    void output() { this->output(this->root, ""); }
-    void output(Node* root, std::string path)
-    {
-        if (!root) return;
-        std::cout << root->value << " " << root->height << " " << (root->parent ? root->parent->value : -1) << " "
-                    << (root->left ? root->left->value : -1) << " " << (root->right ? root->right->value : -1) << " " << path << std::endl;
-        this->output(root->left, path + "l");
-        this->output(root->right, path + "r");
-    }
-    void test()
-    {
-        this->root = new Node(1);
-
-        this->root->right = new Node(2);
-        this->root->right->parent = this->root;
-
-        this->root->right->right = new Node(3);
-        this->root->right->right->parent = this->root->right;
-        
-        this->root->left = new Node(4);
-        this->root->left->parent = this->root;
-        
-        this->root->right->left = new Node(5);
-        this->root->right->left->parent = this->root->right;
-        
-        this->root->right->right->left = new Node(6);
-        this->root->right->right->left->parent = this->root->right->right;
-        
-        this->root->right->right->right = new Node(7);
-        this->root->right->right->right->parent = this->root->right->right;
-
-        this->root->right->right->right->recalculate_height();
-        this->root->right->right->left->recalculate_height();
-        this->root->right->right->recalculate_height();
-        this->root->right->left->recalculate_height();
-        this->root->right->recalculate_height();
-        this->root->left->recalculate_height();
-        this->root->recalculate_height();
-
-        Node* new_root = new Node(0);
-        new_root->right = this->root;
-        this->root->parent = new_root;
-        this->root = new_root;
-
-        this->root->left = new Node(8);
-        this->root->left->parent = this->root;
-
-        this->root->left->recalculate_height();
-        this->root->recalculate_height();
-
-        this->output();
-        std::cout << std::endl;
-
-
-        this->fix_balance(this->root->right->right->right->right);
-
-
-        this->output();
-        std::cout << std::endl;
-    }
 };
 
 Node* AVLTree::rotation(Node* current, AVLTree::Rotations type)
 {
-    //std::cout << (type == AVLTree::Rotations::RIGHT ? "RIGHT" : "LEFT") << std::endl;
     Node* pivot = nullptr;
     if (type == AVLTree::Rotations::RIGHT) pivot = current->left;
     else pivot = current->right;
@@ -168,20 +100,20 @@ void AVLTree::fix_balance(Node* current)
 {
     if (!current) return;
     current->recalculate_height();
+    if (current->left) current->left->recalculate_height();
+    if (current->right) current->right->recalculate_height();
     if (current->Balance() > 1)
     {
-        //std::cout << "left: " << current->value << std::endl;
         // too many vertexes on the left
-        if (current->left->Balance() < 0) current->left = this->rotation(current->left, AVLTree::Rotations::LEFT);
+        if (current->left->Balance() < 0) this->rotation(current->left, AVLTree::Rotations::LEFT);
         current = this->rotation(current, AVLTree::Rotations::RIGHT);
         this->fix_balance(current);
         return;
     }
     if (current->Balance() < -1)
     {
-        //std::cout << "right: " << current->value << std::endl;
         // too many vertexes on the right
-        if (current->right->Balance() > 0) current->right = this->rotation(current->right, AVLTree::Rotations::RIGHT);
+        if (current->right->Balance() > 0) this->rotation(current->right, AVLTree::Rotations::RIGHT);
         current = this->rotation(current, AVLTree::Rotations::LEFT);
         this->fix_balance(current);
         return;
@@ -197,12 +129,12 @@ void AVLTree::insert(int value)
     {
         if (value < current->value)
         {
-            if (!current->left) { current->left = new Node(value, current); this->size++; this->fix_balance(current); return; }
+            if (!current->left) { current->left = new Node(value, current); this->size++; this->fix_balance(current->left); return; }
             current = current->left;
         }
         else
         {
-            if (!current->right) { current->right = new Node(value, current); this->size++; this->fix_balance(current); return; }
+            if (!current->right) { current->right = new Node(value, current); this->size++; this->fix_balance(current->right); return; }
             current = current->right;
         }
     }
@@ -215,7 +147,7 @@ void AVLTree::erase(int value)
         if (value < current->value) current = current->left;
         else current = current->right;
     }
-    if (!current) return;
+    if (!current || value != current->value) return;
     this->size--;
     if (current->left && current->right)
     {
@@ -239,7 +171,7 @@ void AVLTree::erase(int value)
     if (current->left && !current->right)
     {
         parent = current->parent;
-        if (!parent) { this->root = current->left; this->root->parent = nullptr; delete current; return; }
+        if (!parent) { this->root = current->left; current->left->parent = nullptr; delete current; return; }
         if (current->IsLeftSon()) parent->left = current->left;
         else parent->right = current->left;
         current->left->parent = parent;
@@ -250,7 +182,7 @@ void AVLTree::erase(int value)
     if (!current->left && current->right)
     {
         parent = current->parent;
-        if (!parent) { this->root = current->right; this->root->parent = nullptr; delete current; return; }
+        if (!parent) { this->root = current->right; current->right->parent = nullptr; delete current; return; }
         if (current->IsLeftSon()) parent->left = current->right;
         else parent->right = current->right;
         current->right->parent = parent;
@@ -260,37 +192,31 @@ void AVLTree::erase(int value)
     }
 }
 
-int* AVLTree::find(Node* current, int value) const
+const int* AVLTree::find(int value) const
 {
-    // TODO: iterative
-    if (!current) return nullptr;
-    if (value < current->value) return this->find(current->left, value);
-    if (value > current->value) return this->find(current->right, value);
-    return &(current->value);
-}
-int* AVLTree::lowerBound(Node* current, int value) const
-{
-    // TODO: iterative
-    int* data = this->traversal();
-    for (int i = 0; i < this->size; ++i)
+    Node* current = this->root;
+    while (current && value != current->value)
     {
-        if (data[i] >= value) { int* ans = this->find(data[i]); free(data); return(ans); }
+        if (value < current->value) current = current->left;
+        else current = current->right;
     }
-    free(data);
-    return nullptr;
-    /*Node* answer = nullptr;
-    while (root)
+    return (current ? &(current->value) : nullptr);
+}
+const int* AVLTree::lowerBound(int value) const
+{
+    Node* answer = nullptr; Node* current = this->root;
+    while (current)
     {
-        if (value == root->value) return &(root->value); 
-        if (value < root->value) { answer = root; root = root->left; }
-        else root = root->right;
+        if (value == current->value) return &(current->value); 
+        if (value < current->value) { answer = current; current = current->left; }
+        else current = current->right;
     }
     if (!answer) return nullptr;
-    return &(answer->value);*/
+    return &(answer->value);
 }
 void AVLTree::traverse_to_buffer(Node* current, int* buffer, int* filled_length) const
 {
-    if (current == nullptr) return;
+    if (!current) return;
     this->traverse_to_buffer(current->left, buffer, filled_length);
     buffer[(*filled_length)++] = current->value;
     this->traverse_to_buffer(current->right, buffer, filled_length);
@@ -298,7 +224,7 @@ void AVLTree::traverse_to_buffer(Node* current, int* buffer, int* filled_length)
 int* AVLTree::traversal() const
 {
     int length = 0;
-    int* data = static_cast<int*>(malloc(this->size * sizeof(int)));
+    int* data = new int[this->size];
     this->traverse_to_buffer(this->root, data, &length);
     return data;
 }
