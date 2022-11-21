@@ -1,4 +1,5 @@
 #include <initializer_list>
+#include <utility>
 
 enum class Color { RED, BLACK };
 template <typename T> class RBTree;
@@ -46,7 +47,7 @@ public:
     T* lowerBound(T key) const; // O(log(n))
 
     unsigned int size() const { return(this->length); } // O(1)
-    bool empty() const; // O(1)
+    bool empty() const { return (!this->length); } // O(1)
 };
 
 template <typename T>
@@ -97,29 +98,31 @@ void RBTree<T>::fix_balance(Node<T>* current)
     else
     {
         // repaint + rotation
-        parent->color = Color::BLACK;
-        grandparent->color = Color::RED;
         if (parent->isLeftChild())
         {
-            if (current->isLeftChild()) { this->rotation(grandparent, RBTree<T>::Rotations::RIGHT); }
-            else
+            if (current->isRightChild())
             {
                 this->rotation(parent, RBTree<T>::Rotations::LEFT);
-                this->rotation(grandparent, RBTree<T>::Rotations::RIGHT);
+                std::swap(parent, current);
             }
+            parent->color = Color::BLACK;
+            grandparent->color = Color::RED;
+            this->rotation(grandparent, RBTree<T>::Rotations::RIGHT);
         }
         else
         {
-            if (current->isRightChild()) { this->rotation(grandparent, RBTree<T>::Rotations::LEFT); }
-            else
+            if (current->isLeftChild())
             {
                 this->rotation(parent, RBTree<T>::Rotations::RIGHT);
-                this->rotation(grandparent, RBTree<T>::Rotations::LEFT);
+                std::swap(parent, current);
             }
+            parent->color = Color::BLACK;
+            grandparent->color = Color::RED;
+            this->rotation(grandparent, RBTree<T>::Rotations::LEFT);
         }
     }
-    this->fix_balance(current->parent);
-    this->fix_balance(current->parent->parent);
+    this->fix_balance(parent);
+    this->fix_balance(grandparent);
 }
 
 template <typename T>
