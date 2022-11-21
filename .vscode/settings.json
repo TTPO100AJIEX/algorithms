@@ -89,6 +89,7 @@
         "set": "cpp",
         "string_view": "cpp",
         "unordered_map": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "__memory": "cpp"
     }
 }
