@@ -18,7 +18,7 @@ bool check(int index, int numBlack)
         if (numBlackList == -1) numBlackList = numBlack;
         return (numBlack == numBlackList);
     }
-    auto [ key, left, right, isRed ] = data[index];
+    const auto& [ key, left, right, isRed ] = data[index];
     if (left != -1)
     {
         if (key <= data[left].key) return false;
@@ -29,7 +29,7 @@ bool check(int index, int numBlack)
         if (key >= data[right].key) return false;
         if (isRed && data[right].isRed) return false;
     }
-    return (check(left, numBlack + (isRed ? 0 : 1)) && check(right, numBlack + (isRed ? 0 : 1)));
+    return (check(left, numBlack + !isRed) && check(right, numBlack + !isRed));
 }
 
 int main(void)
@@ -47,9 +47,7 @@ int main(void)
     {
         unsigned int number; int key; std::string left, right; char color;
         std::cin >> number >> key >> left >> right >> color;
-        if (left == "null") left = "0";
-        if (right == "null") right = "0";
-        data[number - 1] = { key, std::stoi(left) - 1, std::stoi(right) - 1, color == 'R' };
+        data[number - 1] = { key, (left == "null" ? 0 : std::stoi(left)) - 1, (right == "null" ? 0 : std::stoi(right)) - 1, color == 'R' };
     }
 
     if (data[root].isRed) { std::cout << "NO"; return 0; }

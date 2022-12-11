@@ -2,53 +2,95 @@
 #include <utility>
 
 enum class Color { RED, BLACK };
-template <typename T> class RBTree;
+template <typename ValueType> class RBTree;
 
-template <typename T>
+template <typename ValueType>
 struct Node
 {
-    friend class RBTree<T>;
+    friend class RBTree<ValueType>;
 private:
     bool isLeftChild() const { return (this->parent ? (this->parent->left == this) : false); }
     bool isRightChild() const { return (this->parent ? (this->parent->right == this) : false); }
 
+    Node(const ValueType& value, Node<ValueType>* parent) : value(value), parent(parent) { };
+
 public:
-    T key;
-    Node* left = nullptr;
-    Node* right = nullptr;
-    Node* parent = nullptr;
+    ValueType value;
+    Node<ValueType>* left = nullptr;
+    Node<ValueType>* right = nullptr;
+    Node<ValueType>* parent = nullptr;
     Color color = Color::RED;
     
-    Node(T key) : key(key) { };
-    Node(T key, Node* parent) : key(key), parent(parent) { };
-    ~Node() { delete this->left; delete this->right; }
+    Node() = default;
+    explicit Node(const ValueType& value) : value(value) { };
 };
 
-template <typename T>
+
+template <typename ValueType>
 class RBTree
 {
 private:
-    unsigned int length = 0;
+    size_t length = 0;
 
     enum class Rotations { LEFT, RIGHT };
-    void rotation(Node<T>* root, Rotations type);
-    void fix_balance(Node<T>* current);
+    void rotation(Node<ValueType>* root, Rotations type);
+    void fix_balance(Node<ValueType>* current);
 
 public:
-    Node<T>* root = nullptr;
+    Node<ValueType>* root = nullptr;
+    struct Iterator;
 
     RBTree() = default;
-    RBTree(std::initializer_list<T> list) { for (T key : list) this->insert(key); } // O(nlog(n))
-    ~RBTree() { delete this->root; } // O(n)
+    RBTree(std::initializer_list<ValueType> list) { for (const ValueType& key : list) this->insert(key); } // O(nlog(n))
+    RBTree(const RBTree<ValueType>& other); // O(n)
+    RBTree<ValueType>& operator=(const RBTree<ValueType>& other); // O(n)
 
-    void insert(T key); // O(log(n))
+    void destroy(Node<ValueType>* node)
+    {
+        if (!node) return;
+        this->destroy(node->left);
+        this->destroy(node->right);
+        delete node;
+    }
+    ~RBTree() { this->destroy(this->root); } // O(n)
 
-    T* find(T key) const; // O(log(n))
-    T* lowerBound(T key) const; // O(log(n))
+    void insert(const ValueType& key); // O(log(n))
+    void erase(const ValueType& value); // O(log(n))
 
-    unsigned int size() const { return(this->length); } // O(1)
+    Iterator lowerBound(const ValueType& value) const; // O(log(n))
+    Iterator find(const ValueType& value) const; // O(log(n))
+    Iterator begin() const; // O(1)
+    Iterator end() const; // O(1)
+
+    size_t size() const { return(this->length); } // O(1)
     bool empty() const { return (!this->length); } // O(1)
+
+    struct Iterator
+    {
+    private:
+        Node<ValueType>* node = nullptr;
+
+    public: 
+        Iterator() = default;
+        explicit Iterator(Node<ValueType>* node) : node(node) { }
+
+        const ValueType& operator*() const { return *node; }
+        const ValueType* operator->() const { return node;}
+
+        Iterator& operator++();
+        Iterator operator++(int);
+
+        Iterator& operator--();
+        Iterator operator--(int);
+
+        bool operator== (const Iterator& other) const { return this.node == other.node; }
+        bool operator!= (const Iterator& other) const { return this.node != oter.node; }
+    };
+
 };
+
+
+/*
 
 template <typename T>
 void RBTree<T>::rotation(Node<T>* current, RBTree<T>::Rotations type)
@@ -126,9 +168,9 @@ void RBTree<T>::fix_balance(Node<T>* current)
 }
 
 template <typename T>
-void RBTree<T>::insert(T key)
+void RBTree<T>::insert(const T&  key)
 {
-    if (this->length == 0) { this->root = new Node<T>(key); this->length = 1; this->fix_balance(this->root); return; }
+    if (this->length == 0) { this->root = new Node<T>(key); this->length++; this->fix_balance(this->root); return; }
     Node<T>* current = this->root;
     while (key != current->key)
     {
@@ -146,7 +188,7 @@ void RBTree<T>::insert(T key)
 }
 
 template <typename T>
-T* RBTree<T>::find(T key) const
+T* RBTree<T>::find(const T& key) const
 {
     Node<T>* current = this->root;
     while (current && key != current->key)
@@ -157,7 +199,7 @@ T* RBTree<T>::find(T key) const
     return (current ? &(current->key) : nullptr);
 }
 template <typename T>
-T* RBTree<T>::lowerBound(T key) const
+T* RBTree<T>::lowerBound(const T& key) const
 {
     Node<T>* answer = nullptr; Node<T>* current = this->root;
     while (current)
@@ -167,4 +209,4 @@ T* RBTree<T>::lowerBound(T key) const
         else current = current->right;
     }
     return (answer ? &(answer->key) : nullptr);
-}
+}*/

@@ -8,7 +8,6 @@ int main(void)
     rb_tree.insert(5);
     rb_tree.insert(4);
 
-    rb_tree.output();
     std::cout << std::endl;
     return 0;
 }
