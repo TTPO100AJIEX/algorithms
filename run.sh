@@ -3,6 +3,7 @@ index_file="week6/d2/index.cpp"
 solution_file="week6/d2/RBTree.cpp"
 formatted_file="week6/d2/formatted.cpp"
 
+rm $formatted_file
 cp $solution_file solution_save.cpp
 
 clang-format -i $solution_file
