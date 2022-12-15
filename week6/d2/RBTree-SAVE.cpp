@@ -19,7 +19,15 @@ private:
         if (other.right) this->right = new Node<ValueType>(*other.right, this);
     }
 
+    void remove()
+    {
+        if (this->isLeftChild()) this->parent->left = nullptr;
+        else this->parent->right = nullptr;
+        delete this;
+    }
+
     bool is_double_black_ = false;
+    bool to_delete_ = false;
 
 public:
     ValueType value;
@@ -101,7 +109,7 @@ public:
         this->output(now->left, path + "l");
         this->output(now->right, path + "r");
         std::cout << now->value << " " << path << " " << (now->color == Color::RED ? "R" : "B") << " ";
-        std::cout << (now->left ? now->left->value : -1) << " " << (now->right ? now->right->value : -1) << " " << now->is_double_black_ << std::endl;
+        std::cout << (now->left ? now->left->value : -1) << " " << (now->right ? now->right->value : -1) << " " << now->is_double_black_ << " " << now->to_delete_ << std::endl;
     }
     void output()
     {
@@ -234,7 +242,7 @@ void RBTree<ValueType>::insert(const ValueType& value)
 template <typename ValueType>
 void RBTree<ValueType>::fix_double_black(Node<ValueType>* current)
 {
-    if (current == this->root) { current->color = Color::BLACK; current->is_double_black_ = false; return; }
+    if (current == this->root) { current->color = Color::BLACK; current->is_double_black_ = current->to_delete_ = false; return; }
     Node<ValueType>* parent = current->parent; // definitely exists
     Node<ValueType>* sibling = current->isLeftChild() ? parent->right : parent->left; // definitely exists
     if (sibling->color == Color::BLACK && (!sibling->left || sibling->left->color == Color::BLACK) && (!sibling->right || sibling->right->color == Color::BLACK)) // Case 3
@@ -242,6 +250,7 @@ void RBTree<ValueType>::fix_double_black(Node<ValueType>* current)
         sibling->color = Color::RED; current->is_double_black_ = false;
         if (parent->color == Color::RED) parent->color = Color::BLACK; // Case 3.1
         else parent->is_double_black_ = true; // Case 3.2
+        if (current->to_delete_) current->remove();
         if (parent->is_double_black_) this->fix_double_black(parent);
         return;
     }
@@ -262,6 +271,7 @@ void RBTree<ValueType>::fix_double_black(Node<ValueType>* current)
         if (current->isLeftChild()) sibling->right->color = Color::BLACK;
         else sibling->left->color = Color::BLACK;
         current->is_double_black_ = false;
+        if (current->to_delete_) current->remove();
     }
     else // Case 5 (sibling->left->color == Color::RED) || (sibling->right->color == Color::RED)
     {
@@ -323,11 +333,8 @@ void RBTree<ValueType>::erase(const ValueType& value)
             delete current;
             return;
         }
-        current->is_double_black_ = true;
+        current->is_double_black_ = current->to_delete_ = true;
         this->fix_double_black(current);
-        if (current->isLeftChild()) current->parent->left = nullptr;
-        else current->parent->right = nullptr;
-        delete current;
     }
 }
 

@@ -2,10 +2,42 @@
 #include <vector>
 #include <algorithm>
 #include <random>
-#include "RBTree.cpp"
+#include <map>
+#include "Map.cpp"
 
 int main(void)
 {
+    Map<int, int> test;
+    test.insert(1, 2);
+    std::cout << test.find(1)->second << std::endl;
+    test.insert(1, 3);
+    std::cout << (*test.find(1)).second << std::endl;
+    test.erase(1);
+    std::cout << test.size() << std::endl;
+    std::cout << test.size() << std::endl;
+    
+    Map<int, int> test2(test);
+    Map<int, int> test3 = test;
+    test3.insert(1, 2);
+    const std::pair <int, int>* storage;
+    {
+        Map<int, int>::Iterator now = test3.begin();
+        storage = now.operator->();
+    }
+    std::cout << storage->first << std::endl;
+    /*std::map<int, int> test;
+    test.insert({ 1, 2 });
+    std::pair <const int, int>* storage;
+    {
+        std::map<int, int>::iterator now = test.begin();
+        storage = now.operator->();
+    }
+    std::cout << storage->first << std::endl;*/
+
+
+
+
+    /*
     std::vector <int> A = { 98, 41, 81, 45, 32, 7, 35, 29, 47, 13, 83, 89, 77, 42, 94, 74, 90, 65, 79, 72, 48, 5, 60, 61, 34, 67, 52, 3, 64, 63, 95, 10, 68, 23, 43, 38, 36, 16, 20, 93, 2 };
     std::random_device rd;
     A = { };
@@ -65,6 +97,6 @@ int main(void)
     }
 
     std::cout << rb_tree2.size() << " " << rb_tree.size() << std::endl;
-
+*/
     return 0;
 }
