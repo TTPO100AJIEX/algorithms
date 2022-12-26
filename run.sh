@@ -1,7 +1,7 @@
 set -x
-index_file="week6/d3/index.cpp"
-solution_file="week6/d3/Map.cpp"
-formatted_file="week6/d3/formatted.cpp"
+index_file="extra2/b/index.cpp"
+solution_file="extra2/b/HashTable.cpp"
+formatted_file="extra2/b/formatted.cpp"
 
 rm $formatted_file
 cp $solution_file solution_save.cpp
