@@ -1,5 +1,7 @@
 #include <iostream>
 #include <algorithm>
+#include <vector>
+#include <utility>
 
 struct Range
 {
@@ -8,11 +10,17 @@ struct Range
 
     unsigned int length() { return this->right - this->left; }
 };
-unsigned int Query(unsigned int left, unsigned int right)
+unsigned int Query(Range range)
 {
-    if (left == right) return 0;
-    std::cout << "? " << left << " " << right << std::endl;
+    if (range.left == range.right) return 0;
+    static std::vector< std::pair<Range, unsigned int> > cache;
+    for (const std::pair<Range, unsigned int>& cachedRange : cache)
+    {
+        if (cachedRange.first.left == range.left && cachedRange.first.right == range.right) return cachedRange.second;
+    }
+    std::cout << "? " << range.left << " " << range.right << std::endl;
     unsigned int ans; std::cin >> ans;
+    cache.push_back({ range, ans });
     return ans;
 }
 
@@ -22,15 +30,15 @@ int main()
     std::cin.tie(nullptr);
     
     unsigned int n; std::cin >> n;
-    unsigned int pivot = Query(1, n);
-    unsigned int res = Query(pivot, n);
+    unsigned int pivot = Query({ 1, n });
+    unsigned int res = Query({ pivot, n });
     if (res == pivot)
     {
         Range answer = { pivot + 1, n };
         while (answer.length() != 0)
         {
-            unsigned int mid = (answer.left + answer.right - 1) >> 1;
-            res = Query(pivot, mid);
+            unsigned int mid = (answer.left + answer.right) >> 1;
+            res = Query({ pivot, mid });
             if (res == pivot) answer.right = mid;
             else answer.left = mid + 1;
         }
@@ -42,7 +50,7 @@ int main()
         while (answer.length() != 0)
         {
             unsigned int mid = (answer.left + answer.right + 1) >> 1;
-            res = Query(mid, pivot);
+            res = Query({ mid, pivot });
             if (res == pivot) answer.left = mid;
             else answer.right = mid - 1;
         }
