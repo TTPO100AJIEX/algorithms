@@ -1,47 +1,22 @@
 #include <iostream>
 #include <algorithm>
 
-unsigned int findMax(unsigned int left, unsigned int right, unsigned int second_max = 0) {
+struct Range {
+    unsigned int left;
+    unsigned int right;
+
+    unsigned int length() {
+        return this->right - this->left;
+    }
+};
+unsigned int query(unsigned int left, unsigned int right) {
     if (left == right) {
-        return left;
+        return 0;
     }
-    if (second_max == 0) {
-        std::cout << "? " << left << " " << right << std::endl;
-        std::cin >> second_max;
-    }
-    if (right == left + 1) {
-        if (second_max == left) {
-            return right;
-        } else {
-            return left;
-        }
-    }
-    unsigned int mid = ((left + right) >> 1);
-    if (second_max <= mid) {
-        std::cout << "? " << left << " " << mid << std::endl;
-        unsigned int local_second_max;
-        std::cin >> local_second_max;
-        std::cout << "$" << second_max << " " << local_second_max << std::endl;
-        if (second_max == local_second_max) {
-            return findMax(left, mid, second_max);
-        } else {
-            return findMax(std::max(second_max, local_second_max), right,
-                           std::max(second_max, local_second_max));
-        }
-    } else {
-        if (mid + 1 == right) {
-            return findMax(left, mid, 0);
-        }
-        std::cout << "? " << mid + 1 << " " << right << std::endl;
-        unsigned int local_second_max;
-        std::cin >> local_second_max;
-        if (second_max == local_second_max) {
-            return findMax(mid + 1, right, second_max);
-        } else {
-            return findMax(std::min(second_max, local_second_max), mid,
-                           std::min(second_max, local_second_max));
-        }
-    }
+    std::cout << "? " << left << " " << right << std::endl;
+    unsigned int ans;
+    std::cin >> ans;
+    return ans;
 }
 
 int main() {
@@ -50,6 +25,31 @@ int main() {
 
     unsigned int n;
     std::cin >> n;
-    unsigned int ans = findMax(1, n);
-    std::cout << "! " << ans << std::endl;
+    unsigned int pivot = query(1, n);
+    unsigned int res = query(pivot, n);
+    if (res == pivot) {
+        Range answer = {pivot + 1, n};
+        while (answer.length() != 0) {
+            unsigned int mid = (answer.left + answer.right - 1) >> 1;
+            res = query(pivot, mid);
+            if (res == pivot) {
+                answer.right = mid;
+            } else {
+                answer.left = mid + 1;
+            }
+        }
+        std::cout << "! " << answer.left << std::endl;
+    } else {
+        Range answer = {1, pivot - 1};
+        while (answer.length() != 0) {
+            unsigned int mid = (answer.left + answer.right + 1) >> 1;
+            res = query(mid, pivot);
+            if (res == pivot) {
+                answer.left = mid;
+            } else {
+                answer.right = mid - 1;
+            }
+        }
+        std::cout << "! " << answer.left << std::endl;
+    }
 }

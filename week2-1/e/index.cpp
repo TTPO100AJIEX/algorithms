@@ -1,32 +1,19 @@
 #include <iostream>
 #include <algorithm>
 
-unsigned int findMax(unsigned int left, unsigned int right, unsigned int secondMax = 0)
+struct Range
 {
-    std::cout << "&" << left << " " << right << std::endl;
-    if (left == right) return left;
-    if (secondMax == 0) { std::cout << "? " << left << " " << right << std::endl; std::cin >> secondMax; }
-    if (right == left + 1)
-    {
-        if (secondMax == left) return right;
-        else return left;
-    }
-    unsigned int mid = ((left + right) >> 1);
-    if (secondMax <= mid)
-    {
-        std::cout << "? " << left << " " << mid << std::endl;
-        unsigned int localSecondMax; std::cin >> localSecondMax;
-        if (secondMax == localSecondMax) return findMax(left, mid, secondMax);
-        else return findMax(std::max(secondMax, localSecondMax), right, std::max(secondMax, localSecondMax));
-    }
-    else
-    {
-        if (mid + 1 == right) return findMax(left, mid, 0);
-        std::cout << "? " << mid + 1 << " " << right << std::endl;
-        unsigned int localSecondMax; std::cin >> localSecondMax;
-        if (secondMax == localSecondMax) return findMax(mid + 1, right, secondMax);
-        else return findMax(std::min(secondMax, localSecondMax), mid, std::min(secondMax, localSecondMax));
-    }
+    unsigned int left;
+    unsigned int right;
+
+    unsigned int length() { return this->right - this->left; }
+};
+unsigned int Query(unsigned int left, unsigned int right)
+{
+    if (left == right) return 0;
+    std::cout << "? " << left << " " << right << std::endl;
+    unsigned int ans; std::cin >> ans;
+    return ans;
 }
 
 int main()
@@ -35,6 +22,30 @@ int main()
     std::cin.tie(nullptr);
     
     unsigned int n; std::cin >> n;
-    unsigned int ans = findMax(1, n);
-    std::cout << "! " << ans << std::endl;
+    unsigned int pivot = Query(1, n);
+    unsigned int res = Query(pivot, n);
+    if (res == pivot)
+    {
+        Range answer = { pivot + 1, n };
+        while (answer.length() != 0)
+        {
+            unsigned int mid = (answer.left + answer.right - 1) >> 1;
+            res = Query(pivot, mid);
+            if (res == pivot) answer.right = mid;
+            else answer.left = mid + 1;
+        }
+        std::cout << "! " << answer.left << std::endl;
+    }
+    else
+    {
+        Range answer = { 1, pivot - 1 };
+        while (answer.length() != 0)
+        {
+            unsigned int mid = (answer.left + answer.right + 1) >> 1;
+            res = Query(mid, pivot);
+            if (res == pivot) answer.left = mid;
+            else answer.right = mid - 1;
+        }
+        std::cout << "! " << answer.left << std::endl;
+    }
 }
