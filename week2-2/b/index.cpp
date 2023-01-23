@@ -1,40 +1,35 @@
 #include <iostream>
 #include <ios>
 #include <vector>
-#include <algorithm>
 
-void radixSort(std::vector <int>& data)
-{
-    for (unsigned int i = 0; i < data.size(); i++) data[i] += 1e9;
-    for (unsigned int digit = 0; digit < 4; digit++)
-    {
-        std::vector<int> counter[256];
-        for (unsigned int i = 0; i < data.size(); i++)
-        {
-            const unsigned int offset = (digit << 3);
-            const unsigned int digitValue = (data[i] & (255 << offset)) >> offset;
-            counter[digitValue].push_back(data[i]);
-        }
-        for (unsigned int i = 0, curIndex = 0; i < 256; i++)
-        {
-            for (unsigned int j = 0; j < counter[i].size(); j++)
-            {
-                data[curIndex++] = counter[i][j];
-            }
-        }
-    }
-    for (unsigned int i = 0; i < data.size(); i++) data[i] -= 1e9;
-}
+#define VALUE_LIMIT 1000000000
 
 int main()
 {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
-
+    
     unsigned int n; std::cin >> n;
     std::vector <int> data(n);
-    for (unsigned int i = 0; i < n; i++) std::cin >> data[i];
-    radixSort(data);
-    for (unsigned int i = 0; i < n; i++) std::cout << data[i] << " ";
+    for (unsigned int i = 0; i < n; ++i) { std::cin >> data[i]; data[i] += VALUE_LIMIT; }
+
+
+    for (unsigned int digit = 0; digit < 4; ++digit)
+    {
+        const unsigned int offset = (digit << 3);
+        std::vector<int> counter[256];
+        for (unsigned int i = 0; i < n; ++i)
+        {
+            const unsigned int digitValue = (data[i] >> offset) & 255;
+            counter[digitValue].push_back(data[i]);
+        }
+        for (unsigned int i = 0, curIndex = 0; i < 256; ++i)
+        {
+            for (unsigned int j = 0; j < counter[i].size(); ++j) data[curIndex++] = counter[i][j];
+        }
+    }
+
+
+    for (unsigned int i = 0; i < n; ++i) std::cout << data[i] - VALUE_LIMIT << " ";
     return 0;
 }

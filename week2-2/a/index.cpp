@@ -1,24 +1,6 @@
 #include <iostream>
 #include <ios>
 #include <vector>
-#include <algorithm>
-
-void countingSort(std::vector <int>& data)
-{
-    int min = 1e6, max = -1e6;
-    for (unsigned int i = 0; i < data.size(); i++)
-    {
-        min = std::min(min, data[i]);
-        max = std::max(max, data[i]);
-    }
-    unsigned int diff = max - min + 1;
-    std::vector <unsigned int> counter(diff, 0);
-    for (unsigned int i = 0; i < data.size(); i++) counter[data[i] - min]++;
-    for (unsigned int i = 0, curIndex = 0; i < diff; i++)
-    {
-        for (unsigned int j = 0; j < counter[i]; j++) data[curIndex++] = i + min;
-    }
-}
 
 int main()
 {
@@ -26,9 +8,16 @@ int main()
     std::cin.tie(nullptr);
 
     unsigned int n; std::cin >> n;
-    std::vector <int> data(n);
-    for (unsigned int i = 0; i < n; i++) std::cin >> data[i];
-    countingSort(data);
-    for (unsigned int i = 0; i < n; i++) std::cout << data[i] << " ";
+    if (n == 0) return 0;
+    std::vector <int> data(n), res(n);
+    for (unsigned int i = 0; i < n; ++i)  { std::cin >> data[i]; data[i] += 1000000; }
+
+    unsigned int counter[2000001] = { 0 };
+    for (unsigned int i = 0; i < n; ++i) ++counter[data[i]];
+    for (unsigned int i = 1; i < 2000001; ++i) counter[i] += counter[i - 1];
+    for (int i = n - 1; i >= 0; --i) res[--counter[data[i]]] = data[i];
+
+
+    for (unsigned int i = 0; i < n; ++i) std::cout << res[i] - 1000000 << " ";
     return 0;
 }
