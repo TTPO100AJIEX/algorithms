@@ -1,7 +1,7 @@
 set -x
-index_file="week2-2/e/index.cpp"
-solution_file="week2-2/e/index.cpp"
-formatted_file="week2-2/e/formatted.cpp"
+index_file="week2-2/c/index.cpp"
+solution_file="week2-2/c/index.cpp"
+formatted_file="week2-2/c/formatted.cpp"
 
 rm $formatted_file
 cp $solution_file solution_save.cpp

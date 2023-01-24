@@ -11,7 +11,7 @@ int main()
     std::cin.tie(nullptr);
     
     unsigned int n; std::cin >> n;
-    std::vector <int> data(n);
+    int* data = (int*)(std::malloc(n * sizeof(int)));
     for (unsigned int i = 0; i < n; ++i) { std::cin >> data[i]; data[i] += VALUE_LIMIT; }
 
 
@@ -31,5 +31,6 @@ int main()
 
 
     for (unsigned int i = 0; i < n; ++i) std::cout << data[i] - VALUE_LIMIT << " ";
+    free(data);
     return 0;
 }
