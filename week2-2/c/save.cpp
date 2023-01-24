@@ -17,7 +17,12 @@ int main()
     {
         unsigned int counter[256] = { 0 };
         for (unsigned int i = 0; i < n; ++i) ++counter[(data[i].second >> offset) & 255];
-        for (int i = 254; i >= 0; --i) counter[i] += counter[i + 1];
+        unsigned int save = counter[0]; counter[0] = n;
+        for (unsigned int i = 1; i < 256; i++)
+        {
+            std::swap(save, counter[i]);
+            counter[i] = counter[i - 1] - counter[i];
+        }
         res.resize(n);
         for (int i = n - 1; i >= 0; --i) res[--counter[(data[i].second >> offset) & 255]] = std::move(data[i]);
         data = std::move(res);

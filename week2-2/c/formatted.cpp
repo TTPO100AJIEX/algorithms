@@ -9,21 +9,24 @@ int main() {
 
     unsigned int n;
     std::cin >> n;
-    std::vector<std::pair<unsigned int, unsigned int> > data(n);
+    std::vector<std::pair<unsigned int, unsigned int> > data(n), res(n);
     for (unsigned int i = 0; i < n; i++) {
         std::cin >> data[i].first >> data[i].second;
     }
 
     for (unsigned int offset = 0; offset < 32; offset += 16) {
-        std::vector<std::pair<unsigned int, unsigned int> > counter[65536];
+        unsigned int counter[65536] = {0};
         for (unsigned int i = 0; i < n; ++i) {
-            counter[(data[i].second >> offset) & 65535].push_back(data[i]);
+            ++counter[(data[i].second >> offset) & 65535];
         }
-        for (int i = 65535, cur_index = 0; i >= 0; i--) {
-            for (unsigned int j = 0; j < counter[i].size(); ++j) {
-                data[cur_index++] = std::move(counter[i][j]);
-            }
+        for (int i = 65534; i >= 0; --i) {
+            counter[i] += counter[i + 1];
         }
+        res.resize(n);
+        for (int i = n - 1; i >= 0; --i) {
+            res[--counter[(data[i].second >> offset) & 65535]] = std::move(data[i]);
+        }
+        data = std::move(res);
     }
 
     for (unsigned int i = 0; i < n; i++) {
