@@ -15,19 +15,14 @@ int main()
     for (unsigned int i = 0; i < n; ++i) { std::cin >> data[i]; data[i] += VALUE_LIMIT; }
 
 
-    std::vector<int> counter[256];
+    std::vector <int> res(n);
     for (unsigned int offset = 0; offset < 32; offset += 8)
     {
-        for (unsigned int i = 0; i < 256; ++i) counter[i].clear();
-        for (unsigned int i = 0; i < n; ++i) counter[(data[i] >> offset) & 255].push_back(data[i]);
-        for (unsigned int i = 0, curIndex = 0; i < 256; ++i)
-        {
-            if (counter[i].size() != 0)
-            {
-                std::memcpy(&data[curIndex], counter[i].data(), counter[i].size() * sizeof(int));
-                curIndex += counter[i].size();
-            }
-        }
+        unsigned int counter[256] = { 0 };
+        for (unsigned int i = 0; i < n; ++i) ++counter[(data[i] >> offset) & 255];
+        for (unsigned int i = 1; i < 256; i++) counter[i] += counter[i - 1];
+        for (int i = n - 1; i >= 0; --i) res[--counter[(data[i] >> offset) & 255]] = data[i];
+        std::swap(data, res);
     }
 
 

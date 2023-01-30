@@ -1,12 +1,12 @@
 #include <ios>
 #include <iostream>
 #include <vector>
-#include <tuple>
+#include <utility>
 #include <algorithm>
 
-void radixSort(std::vector< std::pair<unsigned int, bool> >& data)
+void radixSort(std::vector< std::pair<unsigned int, int> >& data)
 {
-    std::vector< std::pair<unsigned int, bool> > res(data.size());
+    std::vector< std::pair<unsigned int, int> > res(data.size());
     for (unsigned int offset = 0; offset < 32; offset += 8)
     {
         unsigned int counter[256] = { 0 };
@@ -21,62 +21,31 @@ int main()
 {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
+
     unsigned int n; std::cin >> n;
-    std::vector < std::pair<unsigned int, bool> > events(2 * n);
-    for (unsigned int i = 0; i < n; i++)
+    std::vector< std::pair<unsigned int, int> > events(n << 1);
+    for (std::vector< std::pair<unsigned int, int> >::iterator now = events.begin(); now != events.end(); now += 2)
     {
-        std::cin >> events[2 * i].first; events[2 * i].second = true;
-        std::cin >> events[2 * i + 1].first; events[2 * i + 1].second = false;
+        std::vector< std::pair<unsigned int, int> >::iterator next = now + 1;
+        std::cin >> now->first >> next->first; now->second = 1; next->second = -1; next->first++;
     }
     radixSort(events);
 
-    std::vector < std::tuple<unsigned int, unsigned int, unsigned int> > points;
-    points.emplace_back(events[0].first, 1, 1);
-    for (unsigned int i = 1; i < 2 * n; i++)
+    std::vector< std::pair<unsigned int, unsigned int> > points;
+    points.emplace_back(0, 0);
+    for (std::vector< std::pair<unsigned int, int> >::iterator event = events.begin(); event != events.end(); ++event)
     {
-        if (std::get<0>(points[points.size() - 1]) == events[i].first)
-        {
-            std::get<1>(points[points.size() - 1]) += (events[i].second ? 1 : -1);
-            if (events[i].second) std::get<2>(points[points.size() - 1])++;
-        }
-        else
-        {
-            points.emplace_back(events[i].first, std::get<1>(points[points.size() - 1]), std::get<1>(points[points.size() - 1]));
-            i--;
-        }
+        if (points.back().first != event->first) points.emplace_back(event->first, points.back().second);
+        points.back().second += event->second;
     }
     
     char command; std::cin >> command;
     while (command != '!')
     {
-        unsigned int time;
-        std::cin >> time;
-        std::vector < std::tuple<unsigned int, unsigned int, unsigned int> >::iterator point = std::lower_bound(points.begin(), points.end(), time,
-            [](const std::tuple<unsigned int, unsigned int, unsigned int>& point, unsigned int value) { return std::get<0>(point) < value; });
-        if (point == points.end())
-        {
-            std::cout << "! 0" << std::endl;
-        }
-        else
-        {
-            if (std::get<0>(*point) == time)
-            {
-                std::cout << "! " << std::get<2>(*point) << std::endl;
-            }
-            else
-            {
-                if (point == points.begin())
-                {
-                    std::cout << "! 0" << std::endl;
-                }
-                else
-                {
-                    std::cout << "! " << std::get<1>(*(point - 1)) << std::endl;
-                }
-            }
-        }
-
-    
+        unsigned int time; std::cin >> time;
+        std::vector < std::pair<unsigned int, unsigned int> >::iterator point = std::upper_bound(points.begin(), points.end(), time,
+            [](const unsigned int value, const std::pair<unsigned int, unsigned int>& point) { return value < point.first; }) - 1;
+        std::cout << "! " << point->second << std::endl;
         std::cin >> command;
     }
 }

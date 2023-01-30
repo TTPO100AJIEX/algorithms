@@ -10,7 +10,7 @@ int main() {
     unsigned int n;
     std::cin >> n;
     std::vector<std::pair<unsigned int, unsigned int> > data(n), res(n);
-    for (unsigned int i = 0; i < n; i++) {
+    for (unsigned int i = 0; i < n; ++i) {
         std::cin >> data[i].first >> data[i].second;
     }
 
@@ -22,11 +22,10 @@ int main() {
         for (int i = 65534; i >= 0; --i) {
             counter[i] += counter[i + 1];
         }
-        res.resize(n);
         for (int i = n - 1; i >= 0; --i) {
-            res[--counter[(data[i].second >> offset) & 65535]] = std::move(data[i]);
+            res[--counter[(data[i].second >> offset) & 65535]] = data[i];
         }
-        data = std::move(res);
+        std::swap(data, res);
     }
 
     for (unsigned int i = 0; i < n; i++) {

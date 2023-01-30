@@ -4,13 +4,11 @@
 #include <utility>
 #include <algorithm>
 
-void radixSort(std::vector<std::pair<unsigned int, unsigned int> >& data) {
-    std::vector<std::pair<unsigned int, unsigned int> > res(data.size());
-    unsigned int counter[256] = {0};
+typedef std::vector<std::pair<unsigned int, unsigned int> > Vector;
+Vector res;
+void radixSort(Vector& data) {
     for (unsigned int offset = 0; offset < 32; offset += 8) {
-        for (unsigned int i = 1; i < 256; ++i) {
-            counter[i] = 0;
-        }
+        unsigned int counter[256] = {0};
         for (unsigned int i = 0; i < data.size(); ++i) {
             ++counter[(data[i].second >> offset) & 255];
         }
@@ -30,50 +28,55 @@ int main() {
 
     unsigned int n;
     std::cin >> n;
-    std::vector<std::pair<unsigned int, unsigned int> > villages(n);
+    Vector villages(n);
     for (unsigned int i = 0; i < n; ++i) {
         villages[i].first = i;
         std::cin >> villages[i].second;
     }
-    radixSort(villages);
 
     unsigned int m;
     std::cin >> m;
-    std::vector<std::pair<unsigned int, unsigned int> > shelters(m);
+    Vector shelters(m);
     for (unsigned int i = 0; i < m; ++i) {
         shelters[i].first = i;
         std::cin >> shelters[i].second;
     }
-    radixSort(shelters);
 
-    for (unsigned int i = 0, nearest_left = 0; i < n; ++i) {
-        while (nearest_left != m - 1 && shelters[nearest_left + 1].second < villages[i].second) {
-            nearest_left++;
+    if (n > m) {
+        res.resize(n);
+        radixSort(villages);
+        res.resize(m);
+        radixSort(shelters);
+    } else {
+        res.resize(m);
+        radixSort(shelters);
+        res.resize(n);
+        radixSort(villages);
+    }
+    shelters.push_back({0, 1 << 31});
+
+    for (Vector::iterator village = villages.begin(), nearest_right = shelters.begin();
+         village != villages.end(); ++village) {
+        while (nearest_right->second < village->second) {
+            nearest_right++;
         }
-        if (nearest_left == m - 1) {
-            villages[i].second = shelters[nearest_left].first + 1;
+        if (nearest_right == shelters.begin()) {
+            village->second = nearest_right->first;
             continue;
         }
-        if (villages[i].second < shelters[nearest_left].second) {
-            villages[i].second = shelters[nearest_left].first + 1;
-            continue;
-        }
-        if (shelters[nearest_left + 1].second - villages[i].second <
-            villages[i].second - shelters[nearest_left].second) {
-            villages[i].second = shelters[nearest_left + 1].first + 1;
+
+        if (nearest_right->second + (nearest_right - 1)->second < (village->second << 1)) {
+            village->second = nearest_right->first;
         } else {
-            villages[i].second = shelters[nearest_left].first + 1;
+            village->second = (nearest_right - 1)->first;
         }
     }
 
-    for (unsigned int i = 0; i < n;) {
-        if (i == villages[i].first) {
-            i++;
-        } else {
-            std::swap(villages[i], villages[villages[i].first]);
-        }
+    res.resize(n);
+    for (Vector::iterator village = villages.begin(); village != villages.end(); ++village) {
+        res[village->first] = *village;
     }
-    for (unsigned int i = 0; i < n; ++i) {
-        std::cout << villages[i].second << " ";
+    for (Vector::iterator village = res.begin(); village != res.end(); ++village) {
+        std::cout << village->second + 1 << " ";
     }
 }

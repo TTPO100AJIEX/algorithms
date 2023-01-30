@@ -10,10 +10,10 @@ void radixSort(Vector& data)
 {
     for (unsigned int offset = 0; offset < 32; offset += 8)
     {
-        unsigned int counter[65536] = { 0 };
-        for (unsigned int i = 0; i < data.size(); ++i) ++counter[(data[i].second >> offset) & 65535];
-        for (unsigned int i = 1; i < 65536; ++i) counter[i] += counter[i - 1];
-        for (int i = data.size() - 1; i >= 0; --i) res[--counter[(data[i].second >> offset) & 65535]] = data[i];
+        unsigned int counter[256] = { 0 };
+        for (unsigned int i = 0; i < data.size(); ++i) ++counter[(data[i].second >> offset) & 255];
+        for (unsigned int i = 1; i < 256; ++i) counter[i] += counter[i - 1];
+        for (int i = data.size() - 1; i >= 0; --i) res[--counter[(data[i].second >> offset) & 255]] = data[i];
         std::swap(data, res);
     }
 }

@@ -8,7 +8,7 @@ typedef std::vector< std::pair<unsigned int, unsigned int> > Vector;
 Vector res;
 void radixSort(Vector& data)
 {
-    for (unsigned int offset = 0; offset < 32; offset += 8)
+    for (unsigned int offset = 0; offset < 32; offset += 16)
     {
         unsigned int counter[65536] = { 0 };
         for (unsigned int i = 0; i < data.size(); ++i) ++counter[(data[i].second >> offset) & 65535];
