@@ -4,17 +4,15 @@
 #include <utility>
 #include <algorithm>
 
-typedef std::vector< std::pair<unsigned int, unsigned int> > Vector;
-Vector res;
-void radixSort(Vector& data)
+#define COMP [](const std::pair <unsigned int, unsigned int>& first, const std::pair <unsigned int, unsigned int>& second) { return first.second < second.second; }
+void heapSort(std::vector< std::pair <unsigned int, unsigned int> >& data)
 {
-    for (unsigned int offset = 0; offset < 32; offset += 8)
+    std::make_heap(data.begin(), data.end(), COMP);
+    std::vector< std::pair <unsigned int, unsigned int> >::iterator end = data.end();
+    while (end != data.begin() + 1)
     {
-        unsigned int counter[65536] = { 0 };
-        for (unsigned int i = 0; i < data.size(); ++i) ++counter[(data[i].second >> offset) & 65535];
-        for (unsigned int i = 1; i < 65536; ++i) counter[i] += counter[i - 1];
-        for (int i = data.size() - 1; i >= 0; --i) res[--counter[(data[i].second >> offset) & 65535]] = data[i];
-        std::swap(data, res);
+        std::pop_heap(data.begin(), end, COMP);
+        end--;
     }
 }
 
@@ -24,26 +22,17 @@ int main()
     std::cin.tie(nullptr);
 
     unsigned int n; std::cin >> n;
-    Vector villages(n);
+    std::vector< std::pair <unsigned int, unsigned int> > villages(n);
     for (unsigned int i = 0; i < n; ++i) { villages[i].first = i; std::cin >> villages[i].second; }
-    
-    unsigned int m; std::cin >> m;
-    Vector shelters(m);
-    for (unsigned int i = 0; i < m; ++i) { shelters[i].first = i; std::cin >> shelters[i].second; }
+    heapSort(villages);
 
-    if (n > m)
-    {
-        res.resize(n); radixSort(villages);
-        res.resize(m); radixSort(shelters);
-    }
-    else
-    {
-        res.resize(m); radixSort(shelters);
-        res.resize(n); radixSort(villages);
-    }
+    unsigned int m; std::cin >> m;
+    std::vector< std::pair <unsigned int, unsigned int> > shelters(m);
+    for (unsigned int i = 0; i < m; ++i) { shelters[i].first = i; std::cin >> shelters[i].second; }
+    heapSort(shelters);
     shelters.push_back({ 0, 1 << 31 });
 
-    for (Vector::iterator village = villages.begin(), nearest_right = shelters.begin(); village != villages.end(); ++village)
+    for (std::vector< std::pair <unsigned int, unsigned int> >::iterator village = villages.begin(), nearest_right = shelters.begin(); village != villages.end(); ++village)
     {
         while (nearest_right->second < village->second) nearest_right++;
         if (nearest_right == shelters.begin()) { village->second = nearest_right->first; continue; }
@@ -52,7 +41,7 @@ int main()
         else village->second = (nearest_right - 1)->first;
     }
 
-    res.resize(n);
-    for (Vector::iterator village = villages.begin(); village != villages.end(); ++village) res[village->first] = *village;
-    for (Vector::iterator village = res.begin(); village != res.end(); ++village) std::cout << village->second + 1 << " ";
+    shelters.resize(n);
+    for (std::vector< std::pair <unsigned int, unsigned int> >::iterator village = villages.begin(); village != villages.end(); ++village) shelters[village->first] = *village;
+    for (std::vector< std::pair <unsigned int, unsigned int> >::iterator village = shelters.begin(); village != shelters.end(); ++village) std::cout << village->second + 1 << " ";
 }
