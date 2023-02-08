@@ -1,6 +1,7 @@
 #include <iostream>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 typedef std::pair< std::pair<unsigned int, unsigned int>, unsigned int > VectorType;
 typedef std::vector<VectorType> Vector;
@@ -44,6 +45,7 @@ int main()
         std::sort(intersections.begin(), intersections.end(), [](const VectorType& first, const VectorType& second) { return first.second > second.second; });
         const unsigned int i = intersections[0].first.first, j = intersections[0].first.second;
         field[i][j] = '0';
+        std::cout << i - 1 << " " << j - 1 << std::endl;
     }
     for (unsigned int i = 2; i < n + 2; i++)
     {
