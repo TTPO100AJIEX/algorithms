@@ -5,9 +5,8 @@
     "version": "1.0.0",
     "author": "TTPO100AJIEX",
     "license": "MIT",
-    "main": "index.js",
     "scripts":
     {
-        
+        "gen": "node scripts/gen.js"
     }
 }
