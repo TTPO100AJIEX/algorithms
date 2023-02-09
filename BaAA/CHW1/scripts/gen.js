@@ -1,19 +1,17 @@
-let sizes = [ ];
-for (let i = 50; i <= 300; i += 50) sizes.push(i);
-for (let i = 100; i <= 4100; i += 100) sizes.push(i);
-sizes = [ ...new Set(sizes) ];
-
-const types = [ "RANDOM_SMALL", "RANDOM_BIG", "ALMOST_SORTED", "BACKWARDS_SORTED" ];
+import { groups } from "./config.js";
 
 import fs from 'fs';
-for (let i = 0; i < sizes.length; i++)
+for (let groupIndex = 0; groupIndex < groups.length; groupIndex++)
 {
-    for (let j = 0; j < types.length; j++)
+    if (fs.existsSync(`tests/group${groupIndex + 1}`)) fs.rmSync(`tests/group${groupIndex + 1}`, { recursive: true });
+    const group = groups[groupIndex];
+    for (let testIndex = 0; testIndex < group.length; testIndex++)
     {
-        const { test, answer } = generateTest(sizes[i], types[j]);
-        fs.mkdirSync(`tests/${sizes[i]}-${types[j]}`);
-        fs.writeFileSync(`tests/${sizes[i]}-${types[j]}/in.in`, test, "utf-8");
-        fs.writeFileSync(`tests/${sizes[i]}-${types[j]}/out.out`, answer, "utf-8");
+        const test = group[testIndex], { input, output } = generateTest(test.size, test.type);
+        fs.mkdirSync(`tests/group${groupIndex + 1}/test${testIndex + 1}`, { recursive: true });
+        fs.writeFileSync(`tests/group${groupIndex + 1}/test${testIndex + 1}/in.in`, input, "utf-8");
+        fs.writeFileSync(`tests/group${groupIndex + 1}/test${testIndex + 1}/out.out`, output, "utf-8");
+        fs.writeFileSync(`tests/group${groupIndex + 1}/test${testIndex + 1}/descirption.txt`, `${test.size} ${test.type}`, "utf-8");
     }
 }
 
@@ -27,10 +25,10 @@ function generateTest(size, type)
         case "ALMOST_SORTED":
         {
             arr = new Array(size).fill(null).map((_, i) => i + 1);
-            for (let i = 0; i < size / 25; i++)
+            for (let i = 0; i < size / 8; i++)
             {
-                let swap = Math.floor(Math.random() * (arr.length - 1));
-                [ arr[swap], arr[swap + 1] ] = [ arr[swap + 1], arr[swap] ];
+                let ind1 = Math.floor(Math.random() * arr.length), ind2 = Math.floor(Math.random() * arr.length);
+                [ arr[ind1], arr[ind2] ] = [ arr[ind2], arr[ind1] ];
             }
             break;
         }
@@ -38,7 +36,7 @@ function generateTest(size, type)
         default: console.error(`Unknown generateTest type ${type}!`);
     }
     return {
-        test: arr.join(' '),
-        answer: arr.sort().join(' ')
+        input: `${size}\n` + arr.join(' '),
+        output: arr.sort((a, b) => a - b).join(' ')
     };
 }

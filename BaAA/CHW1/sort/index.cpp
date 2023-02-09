@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <chrono>
 
 #if defined(BINARY_INSERTION)
     #include "./algorithms/binary-insertion.cpp"
@@ -36,6 +35,9 @@
 #ifdef COUNT_ELEMENTARY_OPERATIONS
     unsigned int elementaryOperations = 0;
 #endif
+#ifdef COUNT_TIME
+    #include <chrono>
+#endif
 
 int main(int argc, char** argv)
 {
@@ -48,17 +50,27 @@ int main(int argc, char** argv)
         using clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady, std::chrono::high_resolution_clock, std::chrono::steady_clock>;
         clock::time_point start = clock::now();
     #endif
+
     sort(data);
+    
 	#ifdef COUNT_TIME
-        clock::time_point end = std::chrono::high_resolution_clock::now();
+        clock::time_point end = clock::now();
     #endif
 
-    for (unsigned int i = 0; i < size; i++) std::cout << data[i] << " ";
+    #if defined(DEBUG) || defined(TEST)
+        for (unsigned int i = 0; i < size; i++)
+        {
+            std::cout << data[i];
+            if (i != size - 1) std::cout << " ";
+        }
+    #endif
+
 	#ifdef COUNT_TIME
         std::cout << "\nTime spent: " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns";
     #endif
     #ifdef COUNT_ELEMENTARY_OPERATIONS
         std::cout << "\nOperations done: " << elementaryOperations;
     #endif
+    
     return 0;
 }
