@@ -1,0 +1,46 @@
+<html>
+    <body>        
+        <script defer>
+            async function draw(holder, key)
+            {
+                const data = results[key];
+                const groups = data[Object.keys(data)[0]].map(e => Object.keys(e[Object.keys(e)[0]])), types = Object.keys(data[Object.keys(data)[0]][0]);
+                for (let groupIndex = 0; groupIndex < groups.length; groupIndex++)
+                {
+                    const group = groups[groupIndex];
+                    for (const type of types)
+                    {
+                        let chartData = [ [ 'Array length' ], ...group.map(e => [ Number(e) ]) ];
+                        for (const algorithm in data)
+                        {
+                            chartData[0].push(algorithmToString(algorithm))
+                            for (const size in data[algorithm][groupIndex][type]) chartData[group.findIndex(value => value == size) + 1].push(data[algorithm][groupIndex][type][size]);
+                        }
+                        chartData = google.visualization.arrayToDataTable(chartData);
+                        let div = document.createElement("div"); holder.appendChild(div);
+                        let chart = new google.visualization.LineChart(div);
+                        chart.draw(chartData, { width: 900, height: 600, title: `${drawTypeToString(key)} на массивах типа "${typeToString(type)}"`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.1, maxZoomOut: 1.25, zoomDelta: 1.1 } });
+                    }
+                    holder.appendChild(document.createElement("hr"));
+                }
+
+                for (const algorithm in data)
+                {
+                        let chartData = [ [ 'Array length' ], ...group.map(e => [ Number(e) ]) ];
+                        for (const algorithm in data)
+                        {
+                            chartData[0].push(algorithmToString(algorithm))
+                            for (const size in data[algorithm][groupIndex][type]) chartData[group.findIndex(value => value == size) + 1].push(data[algorithm][groupIndex][type][size]);
+                        }
+                        chartData = google.visualization.arrayToDataTable(chartData);
+                        let div = document.createElement("div"); holder.appendChild(div);
+                        let chart = new google.visualization.LineChart(div);
+                        chart.draw(chartData, { width: 900, height: 600, title: `${drawTypeToString(key)} на массивах типа "${typeToString(type)}"`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.1, maxZoomOut: 1.25, zoomDelta: 1.1 } });
+                }
+            }
+            /*
+            То есть нужно отдельно для каждой сортировки график "время работы на обратно отсортированном массиве длины 50-300" и "время работы на обратно отсортированном массиве длины 100-4100" и т.д.?
+            */
+        </script>
+    </body>
+</html>
