@@ -1,10 +1,5 @@
 #include <iostream>
-#include <utility>
 #include <vector>
-#include <algorithm>
-
-typedef std::pair< std::pair<unsigned int, unsigned int>, unsigned int > VectorType;
-typedef std::vector<VectorType> Vector;
 
 int main()
 {
@@ -12,47 +7,33 @@ int main()
     std::cin.tie(nullptr);
 
     unsigned int n; std::cin >> n;
-    std::vector< std::vector<char> > field(n + 4, std::vector<char>(n + 4, '.'));
-    for (unsigned int i = 2; i < n + 2; i++)
+    std::vector< std::vector<char> > field(n, std::vector<char>(n, '.'));
+    for (unsigned int i = 0; i < n; ++i)
     {
-        for (unsigned int j = 2; j < n + 2; j++)
+        for (unsigned int j = 0; j < n; ++j) std::cin >> field[i][j];
+    }
+
+    unsigned int bestOffset = 0, bestResult = (1 << 31);
+    for (unsigned int offset = 0; offset < 3; ++offset)
+    {
+        unsigned int result = 0;
+        for (unsigned int i = 0; i < n; ++i)
         {
-            std::cin >> field[i][j];
+            for (unsigned int j = (i + offset) % 3; j < n; j += 3) result += (field[i][j] == 'X');
+        }
+        if (result < bestResult) { bestResult = result; bestOffset = offset; }
+    }
+    for (unsigned int i = 0; i < n; ++i)
+    {
+        for (unsigned int j = (i + bestOffset) % 3; j < n; j += 3)
+        {
+            if (field[i][j] == 'X') field[i][j] = '0';
         }
     }
-    while (true)
-    {
-        Vector intersections;
-        for (unsigned int i = 2; i < n + 2; i++)
-        {
-            for (unsigned int j = 2; j < n + 2; j++)
-            {
-                if (field[i][j] != 'X') continue;
-                unsigned int cou = 0;
 
-                if (field[i][j - 2] == 'X' && field[i][j - 1] == 'X') cou++;
-                if (field[i][j - 1] == 'X' && field[i][j + 1] == 'X') cou++;
-                if (field[i][j + 2] == 'X' && field[i][j + 1] == 'X') cou++;
-                
-                if (field[i - 2][j] == 'X' && field[i - 1][j] == 'X') cou++;
-                if (field[i - 1][j] == 'X' && field[i + 1][j] == 'X') cou++;
-                if (field[i + 2][j] == 'X' && field[i + 1][j] == 'X') cou++;
-
-                if (cou != 0) intersections.push_back({ { i, j }, cou });
-            }
-        }
-        if (intersections.size() == 0) break;
-        std::sort(intersections.begin(), intersections.end(), [](const VectorType& first, const VectorType& second) { return first.second > second.second; });
-        const unsigned int i = intersections[0].first.first, j = intersections[0].first.second;
-        field[i][j] = '0';
-        std::cout << i - 1 << " " << j - 1 << std::endl;
-    }
-    for (unsigned int i = 2; i < n + 2; i++)
+    for (unsigned int i = 0; i < n; ++i)
     {
-        for (unsigned int j = 2; j < n + 2; j++)
-        {
-            std::cout << field[i][j];
-        }
+        for (unsigned int j = 0; j < n; ++j) std::cout << field[i][j];
         std::cout << '\n';
     }
 }
