@@ -27,7 +27,7 @@
 #elif defined(SHELL_CIUR)
     #include "./algorithms/shell-ciur.cpp"
 #elif defined(SHELL)
-    #include "./algorithms/SHELL.cpp"
+    #include "./algorithms/shell.cpp"
 #else
     #error "One of sorting algorithms must be defined"
 #endif

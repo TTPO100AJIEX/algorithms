@@ -1,4 +1,6 @@
 import { groups } from "./config.js";
+const data_small = new Array(5000).fill(null).map(e => Math.floor(Math.random() * 5));
+const data_big = new Array(5000).fill(null).map(e => Math.floor(Math.random() * 4000));
 
 import fs from 'fs';
 for (let groupIndex = 0; groupIndex < groups.length; groupIndex++)
@@ -20,8 +22,8 @@ function generateTest(size, type)
     let arr = [ ];
     switch (type)
     {
-        case "RANDOM_SMALL": { arr = new Array(size).fill(null).map(e => Math.floor(Math.random() * 5)); break; }
-        case "RANDOM_BIG": { arr = new Array(size).fill(null).map(e => Math.floor(Math.random() * 4000)); break; }
+        case "RANDOM_SMALL": { arr = data_small.slice(0, size); break; }
+        case "RANDOM_BIG": { arr = data_big.slice(0, size); break; }
         case "ALMOST_SORTED":
         {
             arr = new Array(size).fill(null).map((_, i) => i + 1);
