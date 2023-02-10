@@ -20,5 +20,5 @@ const algorithms =
     "SHELL_CIUR",
     "SHELL"
 ];
-const runs = 2;
+const runs = 10;
 export { types, groups, algorithms, runs };

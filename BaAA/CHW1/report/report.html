@@ -1,0 +1,110 @@
+<html>
+    <head>
+        <script src="https://www.gstatic.com/charts/loader.js"></script>
+        <style>
+            body { display: grid; grid-template-columns: 1fr 1fr; }
+        </style>
+    </head>
+    <body>
+        <input type="file" accept=".json" id="input_file">
+        
+        <script defer>
+            var results = null;
+            google.charts.load('current', {'packages': ['corechart'] });
+            google.charts.setOnLoadCallback(drawCharts);
+
+            document.getElementById("input_file").addEventListener("change", ev =>
+            {
+                let reader = new FileReader();
+                reader.addEventListener("load", e => { results = JSON.parse(e.currentTarget.result); drawCharts(); });
+                reader.readAsText(ev.target.files[0]);
+            });
+            
+            function algorithmToString(algorithm)
+            {
+                switch (algorithm)
+                {
+                    case "BINARY_INSERTION": { return "Бинарными вставками"; }
+                    case "BUBBLE_1": { return "Пузырьком с условием Айверсона 1"; }
+                    case "BUBBLE_2": { return "Пузырьком с условием Айверсона 1+2"; }
+                    case "BUBBLE": { return "Пузырьком"; }
+                    case "COUNTING": { return "Подсчетом (устойчивая)"; }
+                    case "HEAP": { return "Пирамидальная"; }
+                    case "INSERTION": { return "Простыми вставками"; }
+                    case "MERGE": { return "Слиянием"; }
+                    case "QUICK": { return "Быстрая (первый опорный)"; }
+                    case "RADIX": { return "Цифровой"; }
+                    case "SELECTION": { return "Выбором"; }
+                    case "SHELL_CIUR": { return "Шелла (последовательность Циура)"; }
+                    case "SHELL": { return "Шелла (последовательность Шелла)"; }
+                }
+            }
+            function typeToString(type)
+            {
+                switch (type)
+                {
+                    case "RANDOM_SMALL": { return "Случайные 0-5"; }
+                    case "RANDOM_BIG": { return "Случайные 0-4000"; }
+                    case "ALMOST_SORTED": { return "Почти отсортированный"; }
+                    case "BACKWARDS_SORTED": { return "Обратно отсортированный"; }
+                }
+            }
+            function drawTypeToString(key)
+            {
+                switch (key)
+                {
+                    case "time": return "Время работы (ns)";
+                    case "operations": return "Количество операций";
+                }
+            }
+
+            async function draw(holder, key)
+            {
+                const data = results[key];
+                const groups = data[Object.keys(data)[0]].map(e => Object.keys(e[Object.keys(e)[0]])), types = Object.keys(data[Object.keys(data)[0]][0]);
+                for (let groupIndex = 0; groupIndex < groups.length; groupIndex++)
+                {
+                    const group = groups[groupIndex];
+                    for (const type of types)
+                    {
+                        let chartData = [ [ 'Array length' ], ...group.map(e => [ Number(e) ]) ];
+                        for (const algorithm in data)
+                        {
+                            chartData[0].push(algorithmToString(algorithm))
+                            for (const size in data[algorithm][groupIndex][type]) chartData[group.findIndex(value => value == size) + 1].push(data[algorithm][groupIndex][type][size]);
+                        }
+                        chartData = google.visualization.arrayToDataTable(chartData);
+                        let div = document.createElement("div"); holder.appendChild(div);
+                        let chart = new google.visualization.LineChart(div);
+                        chart.draw(chartData, { width: 900, height: 600, title: `${drawTypeToString(key)} на массивах типа "${typeToString(type)}"`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.1, maxZoomOut: 1.25, zoomDelta: 1.1 } });
+                    }
+                    holder.appendChild(document.createElement("hr"));
+                }
+
+                for (const algorithm in data)
+                {
+                        let chartData = [ [ 'Array length' ], ...group.map(e => [ Number(e) ]) ];
+                        for (const algorithm in data)
+                        {
+                            chartData[0].push(algorithmToString(algorithm))
+                            for (const size in data[algorithm][groupIndex][type]) chartData[group.findIndex(value => value == size) + 1].push(data[algorithm][groupIndex][type][size]);
+                        }
+                        chartData = google.visualization.arrayToDataTable(chartData);
+                        let div = document.createElement("div"); holder.appendChild(div);
+                        let chart = new google.visualization.LineChart(div);
+                        chart.draw(chartData, { width: 900, height: 600, title: `${drawTypeToString(key)} на массивах типа "${typeToString(type)}"`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.1, maxZoomOut: 1.25, zoomDelta: 1.1 } });
+                }
+            }
+            async function drawCharts()
+            {
+                if (!results) return;
+                Array.from(document.body.children).forEach(e => e.remove());
+                let timeHolder = document.createElement("div"); document.body.appendChild(timeHolder); draw(timeHolder, "time");
+                let opsHolder = document.createElement("div"); document.body.appendChild(opsHolder); draw(opsHolder, "operations");
+            }
+            /*
+            То есть нужно отдельно для каждой сортировки график "время работы на обратно отсортированном массиве длины 50-300" и "время работы на обратно отсортированном массиве длины 100-4100" и т.д.?
+            */
+        </script>
+    </body>
+</html>
