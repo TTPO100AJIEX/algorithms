@@ -58,7 +58,7 @@
                 }
             }
 
-            var groups = [ ], template = [ [ 'Array length' ] ];
+            var groups = { }, template = [ [ 'Array length' ] ];
             window.addEventListener("load", () =>
             {
                 document.getElementById("input_file").addEventListener("change", ev =>
@@ -69,27 +69,26 @@
                         const results = JSON.parse(e.currentTarget.result);
                         function parseResults(key)
                         {
+                            groups[key] ??= [ ];
                             for (let groupIndex = 0; groupIndex < results[key][Object.keys(results[key])[0]].length; groupIndex++)
                             {
                                 const groupExample = results[key][Object.keys(results[key])[0]][groupIndex];
-                                groups.push({
+                                groups[key].push({
                                     types: Object.keys(groupExample),
                                     algorithms: Object.keys(results.time),
                                     data: { },
                                     template: [ [ 'Array length' ], ...Object.keys(groupExample[Object.keys(groupExample)[0]]).map(e => [ Number(e)] ) ]
                                 });
-                                const storage = groups.at(-1);
+                                const storage = groups[key].at(-1);
                                 for (const type of storage.types)
                                 {
                                     storage.data[type] = { };
-                                    for (const algorithm of storage.algorithms) storage.data[type][algorithm] = Object.values(results[key][algorithm][groupIndex]);
+                                    for (const algorithm of storage.algorithms) storage.data[type][algorithm] = Object.values(results[key][algorithm][groupIndex][type]);
                                 }
-                                storage.template.push(...Object.keys(results[key].BINARY_INSERTION[groupIndex].RANDOM_SMALL).map(e => [ Number(e) ]));
                             }
                         }
                         parseResults("time");
                         parseResults("operations");
-                        console.log(groups)
                         setupCharts();
                     });
                     reader.readAsText(ev.target.files[0]);
@@ -100,7 +99,7 @@
             {
                 Array.from(document.body.children).forEach(e => e.remove());
                 { let h2 = document.createElement("h2"); h2.innerText = "Выбор отображаемых графиков"; document.body.appendChild(h2); }
-                for (let groupIndex = 0; groupIndex < groups.length; groupIndex++)
+                for (let groupIndex = 0; groupIndex < groups[Object.keys(groups)[0]].length; groupIndex++)
                 {
                     let group = document.createElement("div"); group.className = "group";
                     let h3 = document.createElement("h3"); h3.innerText = `Group ${groupIndex + 1}`; group.appendChild(h3);
@@ -119,7 +118,7 @@
 
             function draw(groupIndex, grouping, drawType)
             {
-                const holder = document.getElementById(drawType), group = groups[groupIndex]; Array.from(holder.children).forEach(e => e.remove());
+                const holder = document.getElementById(drawType), group = groups[drawType][groupIndex]; Array.from(holder.children).forEach(e => e.remove());
                 switch(grouping)
                 {
                     case "types":
@@ -132,44 +131,27 @@
                                 chartData[0].push(algorithmToString(algorithm));
                                 for (let i = 0; i < group.data[type][algorithm].length; i++) chartData[i + 1].push(group.data[type][algorithm][i]);
                             }
-                            console.log(chartData) 
-                            /*chartData = google.visualization.arrayToDataTable(chartData);
-                            let div = document.createElement("div"); holder.appendChild(div);
-                            let chart = new google.visualization.LineChart(div);
-                            chart.draw(chartData, { width: holder.getBoundingClientRect().width, height: Math.max(holder.getBoundingClientRect().width * 2/3, 400), title: `${drawTypeToString(drawType)} на массивах типа "${typeToString(type)}"`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.1, maxZoomOut: 1.25, zoomDelta: 1.1 } });
-                        */}
-                        
-                        /*for (const algorithm in data) template[0].push(algorithmToString(algorithm));
-
-                        for (const type of types)
-                        {
-                            let chartData = JSON.parse(JSON.stringify(template));
-                            for (const algorithm in data)
-                            {
-                                for (const size in data[algorithm][groupIndex][type]) chartData[Object.keys(data[algorithm][groupIndex][type]).sort((a, b) => a - b).findIndex(value => value == size) + 1].push(data[algorithm][groupIndex][type][size]);
-                            }
                             chartData = google.visualization.arrayToDataTable(chartData);
                             let div = document.createElement("div"); holder.appendChild(div);
                             let chart = new google.visualization.LineChart(div);
                             chart.draw(chartData, { width: holder.getBoundingClientRect().width, height: Math.max(holder.getBoundingClientRect().width * 2/3, 400), title: `${drawTypeToString(drawType)} на массивах типа "${typeToString(type)}"`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.1, maxZoomOut: 1.25, zoomDelta: 1.1 } });
-                        }*/
+                        }
                         break;
                     }
                     case "algorithms":
                     {
-                        for (const type of types) template[0].push(typeToString(type));
-
-                        for (const algorithm in data)
+                        for (const algorithm of group.algorithms)
                         {
-                            let chartData = JSON.parse(JSON.stringify(template));
-                            for (const type in data[algorithm][groupIndex])
+                            let chartData = JSON.parse(JSON.stringify(group.template));
+                            for (const type of group.types)
                             {
-                                for (const size in data[algorithm][groupIndex][type]) chartData[Object.keys(data[algorithm][groupIndex][type]).sort((a, b) => a - b).findIndex(value => value == size) + 1].push(data[algorithm][groupIndex][type][size]);
+                                chartData[0].push(typeToString(type));
+                                for (let i = 0; i < group.data[type][algorithm].length; i++) chartData[i + 1].push(group.data[type][algorithm][i]);
                             }
                             chartData = google.visualization.arrayToDataTable(chartData);
                             let div = document.createElement("div"); holder.appendChild(div);
                             let chart = new google.visualization.LineChart(div);
-                            chart.draw(chartData, { width: holder.getBoundingClientRect().width, height: Math.max(holder.getBoundingClientRect().width * 2/3, 400), title: `${drawTypeToString(drawType)} для сортировки "${algorithmToString(algorithm)}"`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.1, maxZoomOut: 1.25, zoomDelta: 1.1 } });
+                            chart.draw(chartData, { width: holder.getBoundingClientRect().width, height: Math.max(holder.getBoundingClientRect().width * 2/3, 400), title: `${drawTypeToString(drawType)} для сортировки ${algorithmToString(algorithm)}`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.1, maxZoomOut: 1.25, zoomDelta: 1.1 } });
                         }
                         break;
                     }
