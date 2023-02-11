@@ -1,42 +1,43 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#ifdef COUNT_TIME
+    #include <chrono>
+#endif
 
 #if defined(BINARY_INSERTION)
-    #include "./algorithms/binary-insertion.cpp"
+    #include "./algorithms/binary-insertion.h"
 #elif defined(BUBBLE_1)
-    #include "./algorithms/bubble-1.cpp"
+    #include "./algorithms/bubble-1.h"
 #elif defined(BUBBLE_2)
-    #include "./algorithms/bubble-2.cpp"
+    #include "./algorithms/bubble-2.h"
 #elif defined(BUBBLE)
-    #include "./algorithms/bubble.cpp"
+    #include "./algorithms/bubble.h"
 #elif defined(COUNTING)
-    #include "./algorithms/counting.cpp"
+    #include "./algorithms/counting.h"
 #elif defined(HEAP)
-    #include "./algorithms/heap.cpp"
+    #include "./algorithms/heap.h"
 #elif defined(INSERTION)
-    #include "./algorithms/insertion.cpp"
+    #include "./algorithms/insertion.h"
 #elif defined(MERGE)
-    #include "./algorithms/merge.cpp"
+    #include "./algorithms/merge.h"
 #elif defined(QUICK)
-    #include "./algorithms/quick.cpp"
+    #include "./algorithms/quick.h"
 #elif defined(RADIX)
-    #include "./algorithms/radix.cpp"
+    #include "./algorithms/radix.h"
 #elif defined(SELECTION)
-    #include "./algorithms/selection.cpp"
+    #include "./algorithms/selection.h"
 #elif defined(SHELL_CIUR)
-    #include "./algorithms/shell-ciur.cpp"
+    #include "./algorithms/shell-ciur.h"
 #elif defined(SHELL)
-    #include "./algorithms/shell.cpp"
+    #include "./algorithms/shell.h"
 #else
     #error "One of sorting algorithms must be defined"
 #endif
 
 #ifdef COUNT_ELEMENTARY_OPERATIONS
-    unsigned int elementaryOperations = 0;
-#endif
-#ifdef COUNT_TIME
-    #include <chrono>
+    #include "./algorithms/utils/countOps.h"
+    extern unsigned int elementaryOperations;
 #endif
 
 int main(int argc, char** argv)
@@ -50,9 +51,7 @@ int main(int argc, char** argv)
         using clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady, std::chrono::high_resolution_clock, std::chrono::steady_clock>;
         clock::time_point start = clock::now();
     #endif
-
     sort(data);
-    
 	#ifdef COUNT_TIME
         clock::time_point end = clock::now();
     #endif

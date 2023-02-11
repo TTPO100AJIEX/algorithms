@@ -13,11 +13,11 @@ function addSheet(workbook = new excelJS.Workbook(), object, name, data)
     {
         object[name][algorithm] = new Array(data[algorithm].length);
         
-        worksheet.mergeCells(nextRow, 1, nextRow, columns);
-        let heading = worksheet.getRow(nextRow).getCell(1); heading.value = algorithm; heading.alignment = { vertical: "middle" }; heading.font = { size: 24, bold: true };
+        worksheet.mergeCells(nextRow, 2, nextRow, columns + 1);
+        let heading = worksheet.getRow(nextRow).getCell(2); heading.value = algorithm; heading.alignment = { vertical: "middle" }; heading.font = { size: 24, bold: true };
         worksheet.getRow(nextRow).height = 30;
 
-        for (let groupIndex = 0, column = 1; groupIndex < data[algorithm].length; groupIndex++)
+        for (let groupIndex = 0, column = 2; groupIndex < data[algorithm].length; groupIndex++)
         {
             const group = data[algorithm][groupIndex];
             object[name][algorithm][groupIndex] = { };
@@ -26,6 +26,11 @@ function addSheet(workbook = new excelJS.Workbook(), object, name, data)
             let subheading = worksheet.getRow(nextRow + 1).getCell(column); subheading.value = `Group ${groupIndex + 1}`; subheading.alignment = { vertical: "middle" }; subheading.font = { size: 18, bold: true };
             worksheet.getRow(nextRow + 1).height = 25;
 
+            for (let runIndex = 0; runIndex < group[0].length; runIndex++)
+            {
+                let runCell = worksheet.getRow(nextRow + runIndex + 3).getCell(1); runCell.value = `Запуск ${runIndex + 1}`; runCell.alignment = { vertical: "middle" }; runCell.font = { size: 12, bold: true };
+            }
+            worksheet.getColumn("A").width = 12;
             for (let testIndex = 0; testIndex < group.length; testIndex++)
             {
                 const test = group[testIndex];
@@ -43,7 +48,7 @@ function addSheet(workbook = new excelJS.Workbook(), object, name, data)
         worksheet.getRow(nextRow + 2).height = 20;
         for (let rowIndex = nextRow + 3; rowIndex < nextRow + runs; rowIndex++) worksheet.getRow(rowIndex).height = 15;
 
-        worksheet.mergeCells(nextRow + runs + 3, 1, nextRow + runs + 3, columns);
+        worksheet.mergeCells(nextRow + runs + 3, 1, nextRow + runs + 3, columns + 1);
         worksheet.getRow(nextRow + runs + 3).getCell(1).fill = { type: "pattern", pattern: "solid", bgColor: { argb: 'FF000000' } };
         worksheet.getRow(nextRow + runs + 3).height = 10;
         nextRow += runs + 4;

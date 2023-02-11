@@ -1,5 +1,8 @@
+#pragma once
+
 #include <vector>
-#include "./utils/swap.cpp"
+#include "./utils/countOps.h"
+#include "./utils/swap.h"
 
 #ifdef COUNT_ELEMENTARY_OPERATIONS
     extern unsigned int elementaryOperations;

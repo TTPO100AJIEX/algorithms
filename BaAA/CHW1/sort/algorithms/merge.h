@@ -1,4 +1,7 @@
+#pragma once
+
 #include <vector>
+#include "./utils/countOps.h"
 
 #ifdef COUNT_ELEMENTARY_OPERATIONS
     extern unsigned int elementaryOperations;

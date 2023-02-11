@@ -1,12 +1,16 @@
+#pragma once
+
 #include <vector>
+#include "./utils/countOps.h"
 
 #ifdef COUNT_ELEMENTARY_OPERATIONS
     extern unsigned int elementaryOperations;
 #endif
 
+static unsigned int CiurSequence[] = { 1750, 701, 301, 132, 57, 23, 10, 4, 1 };
 void sort(std::vector<unsigned int>& data)
 {
-    for (unsigned int gap = data.size() / 2; gap > 0; gap >>= 1)
+    for (const unsigned int gap : CiurSequence)
     {
         for (unsigned int i = gap; i < data.size(); ++i)
         {
