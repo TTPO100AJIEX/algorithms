@@ -12,12 +12,12 @@
             body > h3 { text-align: center; }
 
             body > .group { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 0.5rem; height: min-content; }
+            body > .group .chosen { background: blue; color: white; }
             body > .group > h3 { grid-column: span 2; text-align: center; padding: 0.25rem; }
 
             body > hr { grid-column: 1 / -1; }
         </style>
         <script>
-            var results = null;
             google.charts.load('current', {'packages': ['corechart'] });
 
             function algorithmToString(algorithm)
@@ -58,27 +58,54 @@
                 }
             }
 
+            var groups = [ ], template = [ [ 'Array length' ] ];
             window.addEventListener("load", () =>
             {
                 document.getElementById("input_file").addEventListener("change", ev =>
                 {
                     let reader = new FileReader();
-                    reader.addEventListener("load", e => { results = JSON.parse(e.currentTarget.result); setupCharts(); });
+                    reader.addEventListener("load", e =>
+                    {
+                        const results = JSON.parse(e.currentTarget.result);
+                        function parseResults(key)
+                        {
+                            for (let groupIndex = 0; groupIndex < results[key][Object.keys(results[key])[0]].length; groupIndex++)
+                            {
+                                const groupExample = results[key][Object.keys(results[key])[0]][groupIndex];
+                                groups.push({
+                                    types: Object.keys(groupExample),
+                                    algorithms: Object.keys(results.time),
+                                    data: { },
+                                    template: [ [ 'Array length' ], ...Object.keys(groupExample[Object.keys(groupExample)[0]]).map(e => [ Number(e)] ) ]
+                                });
+                                const storage = groups.at(-1);
+                                for (const type of storage.types)
+                                {
+                                    storage.data[type] = { };
+                                    for (const algorithm of storage.algorithms) storage.data[type][algorithm] = Object.values(results[key][algorithm][groupIndex]);
+                                }
+                                storage.template.push(...Object.keys(results[key].BINARY_INSERTION[groupIndex].RANDOM_SMALL).map(e => [ Number(e) ]));
+                            }
+                        }
+                        parseResults("time");
+                        parseResults("operations");
+                        console.log(groups)
+                        setupCharts();
+                    });
                     reader.readAsText(ev.target.files[0]);
                 });
             });
-
 
             function setupCharts()
             {
                 Array.from(document.body.children).forEach(e => e.remove());
                 { let h2 = document.createElement("h2"); h2.innerText = "Выбор отображаемых графиков"; document.body.appendChild(h2); }
-                for (let groupIndex = 0; groupIndex < results.time[Object.keys(results.time)[0]].length; groupIndex++)
+                for (let groupIndex = 0; groupIndex < groups.length; groupIndex++)
                 {
                     let group = document.createElement("div"); group.className = "group";
                     let h3 = document.createElement("h3"); h3.innerText = `Group ${groupIndex + 1}`; group.appendChild(h3);
-                    let typesButton = document.createElement("button"); typesButton.innerText = "По видам"; group.appendChild(typesButton); typesButton.addEventListener("click", () => drawCharts(groupIndex, "types"));
-                    let algorithmsButton = document.createElement("button"); algorithmsButton.innerText = "По алгоритмам"; group.appendChild(algorithmsButton); algorithmsButton.addEventListener("click", () => drawCharts(groupIndex, "algorithms"));
+                    let typesButton = document.createElement("button"); typesButton.innerText = "По видам"; group.appendChild(typesButton); typesButton.addEventListener("click", () => drawCharts(groupIndex, "types")); typesButton.id = `${groupIndex}_types`;
+                    let algorithmsButton = document.createElement("button"); algorithmsButton.innerText = "По алгоритмам"; group.appendChild(algorithmsButton); algorithmsButton.addEventListener("click", () => drawCharts(groupIndex, "algorithms")); algorithmsButton.id = `${groupIndex}_algorithms`;
                     document.body.appendChild(group);
                 }
                 { document.body.appendChild(document.createElement("hr")); }
@@ -90,13 +117,68 @@
             }
             
 
-            function draw(groupIndex, grouping, type)
+            function draw(groupIndex, grouping, drawType)
             {
-                const holder = document.getElementById("type");
-                Array.from(holder.children).forEach(e => e.remove());
+                const holder = document.getElementById(drawType), group = groups[groupIndex]; Array.from(holder.children).forEach(e => e.remove());
+                switch(grouping)
+                {
+                    case "types":
+                    {
+                        for (const type of group.types)
+                        {
+                            let chartData = JSON.parse(JSON.stringify(group.template));
+                            for (const algorithm of group.algorithms)
+                            {
+                                chartData[0].push(algorithmToString(algorithm));
+                                for (let i = 0; i < group.data[type][algorithm].length; i++) chartData[i + 1].push(group.data[type][algorithm][i]);
+                            }
+                            console.log(chartData) 
+                            /*chartData = google.visualization.arrayToDataTable(chartData);
+                            let div = document.createElement("div"); holder.appendChild(div);
+                            let chart = new google.visualization.LineChart(div);
+                            chart.draw(chartData, { width: holder.getBoundingClientRect().width, height: Math.max(holder.getBoundingClientRect().width * 2/3, 400), title: `${drawTypeToString(drawType)} на массивах типа "${typeToString(type)}"`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.1, maxZoomOut: 1.25, zoomDelta: 1.1 } });
+                        */}
+                        
+                        /*for (const algorithm in data) template[0].push(algorithmToString(algorithm));
+
+                        for (const type of types)
+                        {
+                            let chartData = JSON.parse(JSON.stringify(template));
+                            for (const algorithm in data)
+                            {
+                                for (const size in data[algorithm][groupIndex][type]) chartData[Object.keys(data[algorithm][groupIndex][type]).sort((a, b) => a - b).findIndex(value => value == size) + 1].push(data[algorithm][groupIndex][type][size]);
+                            }
+                            chartData = google.visualization.arrayToDataTable(chartData);
+                            let div = document.createElement("div"); holder.appendChild(div);
+                            let chart = new google.visualization.LineChart(div);
+                            chart.draw(chartData, { width: holder.getBoundingClientRect().width, height: Math.max(holder.getBoundingClientRect().width * 2/3, 400), title: `${drawTypeToString(drawType)} на массивах типа "${typeToString(type)}"`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.1, maxZoomOut: 1.25, zoomDelta: 1.1 } });
+                        }*/
+                        break;
+                    }
+                    case "algorithms":
+                    {
+                        for (const type of types) template[0].push(typeToString(type));
+
+                        for (const algorithm in data)
+                        {
+                            let chartData = JSON.parse(JSON.stringify(template));
+                            for (const type in data[algorithm][groupIndex])
+                            {
+                                for (const size in data[algorithm][groupIndex][type]) chartData[Object.keys(data[algorithm][groupIndex][type]).sort((a, b) => a - b).findIndex(value => value == size) + 1].push(data[algorithm][groupIndex][type][size]);
+                            }
+                            chartData = google.visualization.arrayToDataTable(chartData);
+                            let div = document.createElement("div"); holder.appendChild(div);
+                            let chart = new google.visualization.LineChart(div);
+                            chart.draw(chartData, { width: holder.getBoundingClientRect().width, height: Math.max(holder.getBoundingClientRect().width * 2/3, 400), title: `${drawTypeToString(drawType)} для сортировки "${algorithmToString(algorithm)}"`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.1, maxZoomOut: 1.25, zoomDelta: 1.1 } });
+                        }
+                        break;
+                    }
+                }
             }
             function drawCharts(groupIndex, grouping)
             {
+                Array.from(document.querySelectorAll(".group > button")).forEach(e => e.classList.remove("chosen"));
+                document.getElementById(`${groupIndex}_${grouping}`).classList.add("chosen");
                 draw(groupIndex, grouping, "time");
                 draw(groupIndex, grouping, "operations");
             }
