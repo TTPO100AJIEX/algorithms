@@ -7,6 +7,7 @@ import { groups, runs } from './config.js';
 let workbook = new excelJS.Workbook(), object = { };
 function addSheet(workbook = new excelJS.Workbook(), object, name, data)
 {
+    const localRuns = (name == 'time') ? runs : 1;
     object[name] = { };
     let worksheet = workbook.addWorksheet(name), nextRow = 1, columns = groups.reduce((prev, cur) => prev + cur.length, 0);
     for (const algorithm in data)
@@ -46,12 +47,12 @@ function addSheet(workbook = new excelJS.Workbook(), object, name, data)
         }
 
         worksheet.getRow(nextRow + 2).height = 20;
-        for (let rowIndex = nextRow + 3; rowIndex < nextRow + runs; rowIndex++) worksheet.getRow(rowIndex).height = 15;
+        for (let rowIndex = nextRow + 3; rowIndex < nextRow + localRuns; rowIndex++) worksheet.getRow(rowIndex).height = 15;
 
-        worksheet.mergeCells(nextRow + runs + 3, 1, nextRow + runs + 3, columns + 1);
-        worksheet.getRow(nextRow + runs + 3).getCell(1).fill = { type: "pattern", pattern: "solid", bgColor: { argb: 'FF000000' } };
-        worksheet.getRow(nextRow + runs + 3).height = 10;
-        nextRow += runs + 4;
+        worksheet.mergeCells(nextRow + localRuns + 3, 1, nextRow + localRuns + 3, columns + 1);
+        worksheet.getRow(nextRow + localRuns + 3).getCell(1).fill = { type: "pattern", pattern: "solid", bgColor: { argb: 'FF000000' } };
+        worksheet.getRow(nextRow + localRuns + 3).height = 10;
+        nextRow += localRuns + 4;
     }
 }
 addSheet(workbook, object, "time", timeData);

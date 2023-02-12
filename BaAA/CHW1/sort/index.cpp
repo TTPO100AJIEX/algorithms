@@ -36,8 +36,8 @@
 #endif
 
 #ifdef COUNT_ELEMENTARY_OPERATIONS
+    unsigned long long int elementaryOperations = 0;
     #include "./algorithms/utils/countOps.h"
-    extern unsigned int elementaryOperations;
 #endif
 
 int main(int argc, char** argv)

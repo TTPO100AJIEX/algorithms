@@ -93,11 +93,8 @@ for (const algorithm of algorithms)
                 for (let testIndex = 0; testIndex < groups[groupIndex].length; testIndex++)
                 {
                     groupResult.push([ ]);
-                    for (let runIndex = 0; runIndex < runs; runIndex++)
-                    {
-                        const output = await runFile(`./bin/${MODE}/${algorithm}.exe`, [ `tests/group${groupIndex + 1}/test${testIndex + 1}/in.in` ]);
-                        groupResult.at(-1).push(Number(output.slice(output.indexOf(":") + 2)));
-                    }
+                    const output = await runFile(`./bin/${MODE}/${algorithm}.exe`, [ `tests/group${groupIndex + 1}/test${testIndex + 1}/in.in` ]);
+                    groupResult.at(-1).push(Number(output.slice(output.indexOf(":") + 2)));
                 }
                 benchamrkResult[algorithm].push(groupResult);
                 break;
