@@ -5,6 +5,7 @@
     #include <chrono>
 #endif
 
+// Choose the needed sorting algorithm
 #if defined(BINARY_INSERTION)
     #include "./algorithms/binary-insertion.h"
 #elif defined(BUBBLE_1)
@@ -35,6 +36,7 @@
     #error "One of sorting algorithms must be defined"
 #endif
 
+// Initialize the operations counter if needed
 #ifdef COUNT_ELEMENTARY_OPERATIONS
     unsigned long long int elementaryOperations = 0;
     #include "./algorithms/utils/countOps.h"
@@ -43,19 +45,21 @@
 int main(int argc, char** argv)
 {
     std::ifstream fin(argv[1]);
-    unsigned int size; fin >> size;
+    unsigned int size; fin >> size; // Read array size
     std::vector <unsigned int> data(size);
-    for (unsigned int i = 0; i < size; i++) fin >> data[i];
+    for (unsigned int i = 0; i < size; i++) fin >> data[i]; // Read array
 
 	#ifdef COUNT_TIME
+        // Choose the best clock
         using clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady, std::chrono::high_resolution_clock, std::chrono::steady_clock>;
-        clock::time_point start = clock::now();
+        clock::time_point start = clock::now(); // Get the starting timestamp
     #endif
-    sort(data);
+    sort(data); // Sort the array
 	#ifdef COUNT_TIME
-        clock::time_point end = clock::now();
+        clock::time_point end = clock::now(); // Get the ending timestamp
     #endif
 
+    // Print the array if needed
     #if defined(DEBUG) || defined(TEST)
         for (unsigned int i = 0; i < size; i++)
         {
@@ -64,11 +68,13 @@ int main(int argc, char** argv)
         }
     #endif
 
+    // Print the time spent if needed
 	#ifdef COUNT_TIME
-        std::cout << "\nTime spent: " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns";
+        std::cout << "Time spent: " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns";
     #endif
+    // Print the amount of elementary operations done if needed
     #ifdef COUNT_ELEMENTARY_OPERATIONS
-        std::cout << "\nOperations done: " << elementaryOperations;
+        std::cout << "Operations done: " << elementaryOperations;
     #endif
     
     return 0;

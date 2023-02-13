@@ -77,7 +77,9 @@
                                     types: Object.keys(groupExample),
                                     algorithms: Object.keys(results.time),
                                     data: { },
-                                    template: [ [ 'Array length' ], ...Object.keys(groupExample[Object.keys(groupExample)[0]]).map(e => [ Number(e)] ) ]
+                                    template: [ [ 'Array length' ], ...Object.keys(groupExample[Object.keys(groupExample)[0]]).map(e => [ Number(e)] ) ],
+                                    minTest: Math.min(...Object.keys(groupExample[Object.keys(groupExample)[0]]).map(e => [ Number(e)] )) - 50,
+                                    maxTest: Math.max(...Object.keys(groupExample[Object.keys(groupExample)[0]]).map(e => [ Number(e)] )) + 50
                                 });
                                 const storage = groups[key].at(-1);
                                 for (const type of storage.types)
@@ -134,7 +136,15 @@
                             chartData = google.visualization.arrayToDataTable(chartData);
                             let div = document.createElement("div"); holder.appendChild(div);
                             let chart = new google.visualization.LineChart(div);
-                            chart.draw(chartData, { width: holder.getBoundingClientRect().width, height: Math.max(holder.getBoundingClientRect().width * 2/3, 400), title: `${drawTypeToString(drawType)} на массивах типа "${typeToString(type)}"`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1 } });
+                            chart.draw(chartData, {
+                                width: holder.getBoundingClientRect().width,
+                                height: Math.max(holder.getBoundingClientRect().width * 2/3, 400),
+                                title: `${drawTypeToString(drawType)} на массивах типа "${typeToString(type)}"`,
+                                titleTextStyle: { fontSize: 18 },
+                                explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1, axis: 'vertical' },
+                                hAxis: { title: 'Размер массива', titleTextStyle: { fontSize: 16, bold: true }, minValue: group.minTest, maxValue: group.maxTest },
+                                vAxis: { title: drawType == 'time' ? 'Время выполнения (ns)' : 'Количество элементарных операций', titleTextStyle: { fontSize: 16, bold: true } }
+                            });
                         }
                         break;
                     }
@@ -151,7 +161,15 @@
                             chartData = google.visualization.arrayToDataTable(chartData);
                             let div = document.createElement("div"); holder.appendChild(div);
                             let chart = new google.visualization.LineChart(div);
-                            chart.draw(chartData, { width: holder.getBoundingClientRect().width, height: Math.max(holder.getBoundingClientRect().width * 2/3, 400), title: `${drawTypeToString(drawType)} для сортировки ${algorithmToString(algorithm)}`, titleTextStyle: { fontSize: 18 }, explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1 } });
+                            chart.draw(chartData, {
+                                width: holder.getBoundingClientRect().width,
+                                height: Math.max(holder.getBoundingClientRect().width * 2/3, 400),
+                                title: `${drawTypeToString(drawType)} для сортировки ${algorithmToString(algorithm)}`,
+                                titleTextStyle: { fontSize: 18 },
+                                explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1, axis: 'vertical' },
+                                hAxis: { title: 'Размер массива', titleTextStyle: { fontSize: 16, bold: true }, minValue: group.minTest, maxValue: group.maxTest },
+                                vAxis: { title: drawType == 'time' ? 'Время выполнения (ns)' : 'Количество элементарных операций', titleTextStyle: { fontSize: 16, bold: true } }
+                            });
                         }
                         break;
                     }
