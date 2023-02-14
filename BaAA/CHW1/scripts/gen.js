@@ -1,7 +1,28 @@
-import { groups } from "./config.js";
-const data_small = new Array(5000).fill(null).map(e => Math.floor(Math.random() * 5));
-const data_big = new Array(5000).fill(null).map(e => Math.floor(Math.random() * 4000));
+const data = {
+    "RANDOM_SMALL": new Array(4100).fill(null).map(e => Math.floor(Math.random() * 5)),
+    "RANDOM_BIG": new Array(4100).fill(null).map(e => Math.floor(Math.random() * 4000)),
+    "ALMOST_SORTED": new Array(4100).fill(null).map((_, i) => i + 1),
+    "BACKWARDS_SORTED": new Array(4100).fill(null).map((_, i) => i + 1).reverse()
+};
+for (let i = 0; i < data.ALMOST_SORTED.length - 50; i += 50)
+{
+    for (let swapCounter = 0; swapCounter < 50 / 8; swapCounter++) // 50/8 = 6 swaps in every 50 elements
+    {
+        let ind1 = Math.floor(Math.random() * 50) + i, ind2 = Math.floor(Math.random() * 50) + i;
+        [ data.ALMOST_SORTED[ind1], data.ALMOST_SORTED[ind2] ] = [ data.ALMOST_SORTED[ind2], data.ALMOST_SORTED[ind1] ];
+    }
+}
 
+function generateTest(size, type)
+{
+    let arr = data[type].slice(0, size);
+    return {
+        input: `${size}\n` + arr.join(' '),
+        output: arr.sort((a, b) => a - b).join(' ')
+    };
+}
+
+import { groups } from "./config.js";
 import fs from 'fs';
 for (let groupIndex = 0; groupIndex < groups.length; groupIndex++)
 {
@@ -15,30 +36,4 @@ for (let groupIndex = 0; groupIndex < groups.length; groupIndex++)
         fs.writeFileSync(`tests/group${groupIndex + 1}/test${testIndex + 1}/out.out`, output, "utf-8");
         fs.writeFileSync(`tests/group${groupIndex + 1}/test${testIndex + 1}/descirption.txt`, `${test.size} ${test.type}`, "utf-8");
     }
-}
-
-function generateTest(size, type)
-{
-    let arr = [ ];
-    switch (type)
-    {
-        case "RANDOM_SMALL": { arr = data_small.slice(0, size); break; }
-        case "RANDOM_BIG": { arr = data_big.slice(0, size); break; }
-        case "ALMOST_SORTED":
-        {
-            arr = new Array(size).fill(null).map((_, i) => i + 1);
-            for (let i = 0; i < size / 8; i++)
-            {
-                let ind1 = Math.floor(Math.random() * arr.length), ind2 = Math.floor(Math.random() * arr.length);
-                [ arr[ind1], arr[ind2] ] = [ arr[ind2], arr[ind1] ];
-            }
-            break;
-        }
-        case "BACKWARDS_SORTED": { arr = new Array(size).fill(null).map((_, i) => i + 1).reverse(); break; }
-        default: console.error(`Unknown generateTest type ${type}!`);
-    }
-    return {
-        input: `${size}\n` + arr.join(' '),
-        output: arr.sort((a, b) => a - b).join(' ')
-    };
 }
