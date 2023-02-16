@@ -14,6 +14,8 @@ void sort(std::vector<unsigned int>& data)
     {
         countOps(2); // access lastIndex, create and initialize savedLastIndex
         unsigned int savedLastIndex = lastIndex;
+        countOps(1); // assignment
+        lastIndex = 0; // If there will be no swaps, the loop should stop
         countOps(1); // create and initialize j
         countOps(3); // access j, access savedLastIndex, compare
         for (unsigned int j = 0; j < savedLastIndex; ++j) // Loop through the unsorted part of array
