@@ -1,4 +1,5 @@
 {
+    "is_wsl": true,
     "time": {
         "BINARY_INSERTION": [
             {
