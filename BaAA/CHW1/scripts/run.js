@@ -58,9 +58,9 @@ for (const algorithm of algorithms)
                         else { group_verdict = "WA"; log.push(`Test ${testIndex + 1}: ❌ WA`); }
                     } catch(err) { group_verdict = "RE"; log.push(`Test ${testIndex + 1}: ⚠️  RE`); }
                 }
-                if (group_verdict == "OK") console.log(`Group ${groupIndex + 1}: ✅ OK`);
-                if (group_verdict == "RE") console.log(`Group ${groupIndex + 1}: ⚠️  RE`);
-                if (group_verdict == "WA") console.log(`Group ${groupIndex + 1}: ❌ WA`);
+                if (group_verdict == "OK") console.log(`Группа ${groupIndex + 1}: ✅ OK`);
+                if (group_verdict == "RE") console.log(`Группа ${groupIndex + 1}: ⚠️  RE`);
+                if (group_verdict == "WA") console.log(`Группа ${groupIndex + 1}: ❌ WA`);
                 console.log(log.map(l => "    " + l).join("\n"));
                 break;
             }
@@ -76,9 +76,9 @@ for (const algorithm of algorithms)
                     }
                     catch(err) { group_verdict = "RE"; break; }
                 }
-                if (group_verdict == "OK") console.log(`Group ${groupIndex + 1}: ✅ OK`);
-                if (group_verdict == "RE") console.log(`Group ${groupIndex + 1}: ⚠️  RE`);
-                if (group_verdict == "WA") console.log(`Group ${groupIndex + 1}: ❌ WA`);
+                if (group_verdict == "OK") console.log(`Группа ${groupIndex + 1}: ✅ OK`);
+                if (group_verdict == "RE") console.log(`Группа ${groupIndex + 1}: ⚠️  RE`);
+                if (group_verdict == "WA") console.log(`Группа ${groupIndex + 1}: ❌ WA`);
                 break;
             }
             case "COUNT_TIME":

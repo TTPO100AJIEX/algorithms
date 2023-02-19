@@ -26,7 +26,7 @@ for (const key in data)
     for (let groupIndex = 0, column = 3; groupIndex < groups.length; groupIndex++)
     {
         const group = groups[groupIndex]; worksheet.mergeCells(1, column, 1, column + group.length / types.length - 1);
-        let heading = worksheet.getRow(1).getCell(column); heading.value = `Group ${groupIndex + 1}`; heading.alignment = { vertical: "middle" }; heading.font = { size: 18, bold: true };
+        let heading = worksheet.getRow(1).getCell(column); heading.value = `Группа ${groupIndex + 1}`; heading.alignment = { vertical: "middle" }; heading.font = { size: 18, bold: true };
         
         for (const size of [ ...new Set(group.map(test => test.size)) ])
         {

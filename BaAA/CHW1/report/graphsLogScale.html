@@ -262,7 +262,7 @@
                 for (let groupIndex = 0; groupIndex < groups[Object.keys(groups)[0]].length; groupIndex++)
                 {
                     let group = document.createElement("div"); group.className = "group";
-                    let h3 = document.createElement("h3"); h3.innerText = `Group ${groupIndex + 1}`; group.appendChild(h3);
+                    let h3 = document.createElement("h3"); h3.innerText = `Группа ${groupIndex + 1}`; group.appendChild(h3);
                     let typesButton = document.createElement("button"); typesButton.innerText = "По видам"; group.appendChild(typesButton); typesButton.addEventListener("click", () => drawCharts(groupIndex, "types")); typesButton.id = `${groupIndex}_types`;
                     let algorithmsButton = document.createElement("button"); algorithmsButton.innerText = "По алгоритмам"; group.appendChild(algorithmsButton); algorithmsButton.addEventListener("click", () => drawCharts(groupIndex, "algorithms")); algorithmsButton.id = `${groupIndex}_algorithms`;
                     document.body.appendChild(group);
@@ -346,7 +346,7 @@
     </head>
     <body>
         <label>
-            Upload data.json<br>
+            Пожалуйста, загрузить data.json эксперимента<br>
             <input type="file" accept=".json" id="input_file">
         </label>
     </body>
