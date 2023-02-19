@@ -45,14 +45,14 @@ for (const key in data)
             case "BINARY_INSERTION": { head.value = "Бинарными вставками"; break; }
             case "BUBBLE_1": { head.value = "Пузырьком с условием Айверсона 1"; break; }
             case "BUBBLE_2": { head.value = "Пузырьком с условием Айверсона 1+2"; break; }
-            case "BUBBLE": { head.value = "Пузырьком"; break; }
+            case "BUBBLE": { head.value = "Сортировка пузырьком"; break; }
             case "COUNTING": { head.value = "Подсчетом (устойчивая)"; break; }
-            case "HEAP": { head.value = "Пирамидальная"; break; }
+            case "HEAP": { head.value = "Пирамидальная сортировка"; break; }
             case "INSERTION": { head.value = "Простыми вставками"; break; }
-            case "MERGE": { head.value = "Слиянием"; break; }
+            case "MERGE": { head.value = "Сортировка слиянием"; break; }
             case "QUICK": { head.value = "Быстрая (первый опорный)"; break; }
-            case "RADIX": { head.value = "Цифровой"; break; }
-            case "SELECTION": { head.value = "Выбором"; break; }
+            case "RADIX": { head.value = "Цифровая сортировка"; break; }
+            case "SELECTION": { head.value = "Сортировка выбором"; break; }
             case "SHELL_CIUR": { head.value = "Шелла (последовательность Циура)"; break; }
             case "SHELL": { head.value = "Шелла (последовательность Шелла)"; break; }
         }

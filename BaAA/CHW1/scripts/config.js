@@ -15,19 +15,19 @@ const groups =
 ];
 const algorithms =
 [
-    "BINARY_INSERTION",
+    "BUBBLE",
     "BUBBLE_1",
     "BUBBLE_2",
-    "BUBBLE",
-    "COUNTING",
-    "HEAP",
-    "INSERTION",
-    "MERGE",
-    "QUICK",
-    "RADIX",
     "SELECTION",
+    "INSERTION",
+    "BINARY_INSERTION",
+    "MERGE",
+    "HEAP", 
+    "QUICK",
+    "SHELL",
     "SHELL_CIUR",
-    "SHELL"
+    "COUNTING",
+    "RADIX"
 ];
 const runs = 50;
 export { types, groups, algorithms, runs };

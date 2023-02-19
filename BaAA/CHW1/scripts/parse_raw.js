@@ -13,6 +13,26 @@ import timeData from "../report/data/COUNT_TIME.json" assert { type: "json" };
 import opsData from "../report/data/COUNT_ELEMENTARY_OPERATIONS.json" assert { type: "json" };
 import { groups, runs } from './config.js';
 
+function algorithmToString(algorithm)
+{
+    switch (algorithm)
+    {
+        case "BINARY_INSERTION": { return "Сортировка бинарными вставками"; }
+        case "BUBBLE_1": { return "Сортировка пузырьком с условием Айверсона 1"; }
+        case "BUBBLE_2": { return "Сортировка пузырьком с условием Айверсона 1+2"; }
+        case "BUBBLE": { return "Сортировка пузырьком"; }
+        case "COUNTING": { return "Сортировка подсчетом (устойчивая)"; }
+        case "HEAP": { return "Пирамидальная сортировка"; }
+        case "INSERTION": { return "Сортировка простыми вставками"; }
+        case "MERGE": { return "Сортировка слиянием"; }
+        case "QUICK": { return "Быстрая сортировка с первым опорным"; }
+        case "RADIX": { return "Цифровая сортировка"; }
+        case "SELECTION": { return "Сортировка выбором"; }
+        case "SHELL_CIUR": { return "Сортировка Шелла (последовательность Циура)"; }
+        case "SHELL": { return "Сортировка Шелла (последовательность Шелла)"; }
+    }
+}
+
 let workbook = new excelJS.Workbook(), object = { };
 function addSheet(workbook = new excelJS.Workbook(), object, name, data)
 {
@@ -24,7 +44,7 @@ function addSheet(workbook = new excelJS.Workbook(), object, name, data)
         object[name][algorithm] = new Array(data[algorithm].length);
         
         worksheet.mergeCells(nextRow, 2, nextRow, columns + 1);
-        let heading = worksheet.getRow(nextRow).getCell(2); heading.value = algorithm; heading.alignment = { vertical: "middle" }; heading.font = { size: 24, bold: true };
+        let heading = worksheet.getRow(nextRow).getCell(2); heading.value = algorithmToString(algorithm); heading.alignment = { vertical: "middle" }; heading.font = { size: 24, bold: true };
         worksheet.getRow(nextRow).height = 30;
 
         for (let groupIndex = 0, column = 2; groupIndex < data[algorithm].length; groupIndex++)
@@ -33,7 +53,7 @@ function addSheet(workbook = new excelJS.Workbook(), object, name, data)
             object[name][algorithm][groupIndex] = { };
 
             worksheet.mergeCells(nextRow + 1, column, nextRow + 1, column + group.length - 1);
-            let subheading = worksheet.getRow(nextRow + 1).getCell(column); subheading.value = `Group ${groupIndex + 1}`; subheading.alignment = { vertical: "middle" }; subheading.font = { size: 18, bold: true };
+            let subheading = worksheet.getRow(nextRow + 1).getCell(column); subheading.value = `Группа ${groupIndex + 1}`; subheading.alignment = { vertical: "middle" }; subheading.font = { size: 18, bold: true };
             worksheet.getRow(nextRow + 1).height = 25;
 
             for (let runIndex = 0; runIndex < group[0].length; runIndex++)
@@ -48,7 +68,7 @@ function addSheet(workbook = new excelJS.Workbook(), object, name, data)
                 object[name][algorithm][groupIndex][type] ??= { };
                 object[name][algorithm][groupIndex][type][size] = test.reduce((prev, cur) => prev + cur, 0) / test.length;
 
-                let head = worksheet.getRow(nextRow + 2).getCell(column + testIndex); head.value = `Test ${testIndex + 1}`; head.alignment = { vertical: "middle", horizontal: "center" }; head.font = { size: 12, bold: true };
+                let head = worksheet.getRow(nextRow + 2).getCell(column + testIndex); head.value = `Тест ${testIndex + 1}`; head.alignment = { vertical: "middle", horizontal: "center" }; head.font = { size: 12, bold: true };
                 for (let resultIndex = 0; resultIndex < test.length; resultIndex++) { let resultCell = worksheet.getRow(nextRow + resultIndex + 3).getCell(column + testIndex); resultCell.value = test[resultIndex]; resultCell.alignment = { vertical: "middle", horizontal: "center" }; resultCell.font = { size: 10 }; }
             }
             
