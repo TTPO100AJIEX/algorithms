@@ -1,12 +1,8 @@
 #include <ios>
 #include <iostream>
 #include <vector>
+#include <utility>
 #include <algorithm>
-
-struct State {
-    unsigned int Connected;
-    unsigned int NotConnected;
-};
 
 int main() {
     std::ios::sync_with_stdio(false);
@@ -14,24 +10,20 @@ int main() {
 
     unsigned int n;
     std::cin >> n;
-    std::vector<unsigned int> router_price(n);
-    for (unsigned int i = 0; i < n; i++) {
-        std::cin >> router_price[i];
+    std::vector<unsigned int> routers(n);
+    for (unsigned int i = 0; i < n; ++i) {
+        std::cin >> routers[i];
     }
 
-    State prev = {0, 0};
-    for (unsigned int i = 0; i < n; i++) {
+    std::pair<unsigned int, unsigned int> cur = {*routers.begin(), 0};
+    for (std::vector<unsigned int>::iterator router_price = routers.begin() + 1;
+         router_price != routers.end(); ++router_price) {
         unsigned int connect_price;
-        if (i == 0) {
-            connect_price = (1 << 31);
-        } else {
-            std::cin >> connect_price;
-        }
-        State cur;
-        cur.Connected = std::min(prev.Connected + std::min(connect_price, router_price[i]),
-                                 prev.NotConnected + connect_price + router_price[i]);
-        cur.NotConnected = std::min(prev.Connected, prev.NotConnected + connect_price);
-        prev = cur;
+        std::cin >> connect_price;
+        cur.second += connect_price;
+        cur = {std::min(cur.first + std::min(connect_price, *router_price),
+                        cur.second + *router_price),
+               std::min(cur.first, cur.second)};
     }
-    std::cout << prev.Connected;
+    std::cout << cur.first;
 }

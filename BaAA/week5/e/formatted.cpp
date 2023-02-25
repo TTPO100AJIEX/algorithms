@@ -14,22 +14,22 @@ int main() {
     std::vector<unsigned int> points(n);
     points[0] = 0;
     points[n - 1] = l;
-    std::vector<std::vector<unsigned int> > dp(n, std::vector<unsigned int>(n, 0));
-    for (unsigned int i = 1; i < n - 1; i++) {
-        std::cin >> points[i];
+    std::vector<std::vector<unsigned int> > dp(n, std::vector<unsigned int>(n));
+    for (unsigned int i = 0; i < n - 2; ++i) {
+        dp[i] = std::vector<unsigned int>(n - i - 1);
+        dp[i][0] = 0;
+        std::cin >> points[i + 1];
     }
 
-    for (int i = n - 1; i >= 0; i--) {
-        for (unsigned int j = i + 1; j < n; j++) {
-            unsigned int best_split = static_cast<unsigned int>(1 << 31);
-            for (unsigned int splitpoint = i + 1; splitpoint < j; splitpoint++) {
-                best_split = std::min(dp[i][splitpoint] + dp[splitpoint][j] + points[j] - points[i],
+    for (int i = n - 2; i >= 0; --i) {
+        for (unsigned int j = 0; j < n - i - 2; ++j) {
+            unsigned int best_split = dp[i][0] + dp[i + 1][j];
+            for (unsigned int splitpoint = 1; splitpoint <= j; ++splitpoint) {
+                best_split = std::min(dp[i][splitpoint] + dp[splitpoint + i + 1][j - splitpoint],
                                       best_split);
             }
-            if (best_split != static_cast<unsigned int>(1 << 31)) {
-                dp[i][j] = best_split;
-            }
+            dp[i][j + 1] = best_split + points[j + i + 2] - points[i];
         }
     }
-    std::cout << dp[0][n - 1];
+    std::cout << dp[0][n - 2];
 }

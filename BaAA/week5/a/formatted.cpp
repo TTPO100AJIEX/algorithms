@@ -5,22 +5,25 @@
 #include <algorithm>
 
 int main() {
-    std::string x, y;
-    std::cin >> x >> y;
-    if (x.empty() || y.empty()) {
-        std::cout << 0;
-        return 0;
-    }
-    std::vector<std::vector<int> > counter(x.size() + 1, std::vector<int>(y.size() + 1, 0));
-    for (unsigned int i = 1; i <= x.size(); i++) {
-        for (unsigned int j = 1; j <= y.size(); j++) {
-            if (x[i - 1] == y[j - 1]) {
-                counter[i][j] = counter[i - 1][j - 1] + 1;
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    std::string first_string;
+    std::cin >> first_string;
+    std::vector<int> prev(first_string.size() + 1, 0), cur(first_string.size() + 1, 0);
+
+    char second_string_symbol;
+    while (std::cin >> second_string_symbol) {
+        for (unsigned int j = 0; j < first_string.size(); ++j) {
+            if (second_string_symbol == first_string[j]) {
+                cur[j + 1] = prev[j] + 1;
             } else {
-                counter[i][j] = std::max(counter[i - 1][j], counter[i][j - 1]);
+                cur[j + 1] = std::max(prev[j + 1], cur[j]);
             }
         }
+        std::swap(prev, cur);
     }
-    std::cout << counter[x.size()][y.size()];
+
+    std::cout << prev[first_string.size()];
     return 0;
 }

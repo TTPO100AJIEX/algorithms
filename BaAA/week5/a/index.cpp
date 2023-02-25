@@ -8,22 +8,21 @@ int main()
 {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
-    std::string x, y;
-    std::cin >> x >> y;
-    if (x.size() == 0 || y.size() == 0)
+
+    std::string firstString; std::cin >> firstString;
+    std::vector <int> prev(firstString.size() + 1, 0), cur(firstString.size() + 1, 0);
+
+    char secondStringSymbol;
+    while (std::cin >> secondStringSymbol)
     {
-        std::cout << 0;
-        return 0;
-    }
-    std::vector < std::vector <int> > counter(x.size() + 1, std::vector <int>(y.size() + 1, 0));
-    for (unsigned int i = 1; i <= x.size(); i++)
-    {
-        for (unsigned int j = 1; j <= y.size(); j++)
+        for (unsigned int j = 0; j < firstString.size(); ++j)
         {
-            if (x[i - 1] == y[j - 1]) counter[i][j] = counter[i - 1][j - 1] + 1;
-            else counter[i][j] = std::max(counter[i - 1][j], counter[i][j - 1]);
+            if (secondStringSymbol == firstString[j]) cur[j + 1] = prev[j] + 1;
+            else cur[j + 1] = std::max(prev[j + 1], cur[j]);
         }
+        std::swap(prev, cur);
     }
-    std::cout << counter[x.size()][y.size()];
+
+    std::cout << prev[firstString.size()];
     return 0;
 }

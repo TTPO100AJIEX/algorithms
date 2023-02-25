@@ -9,41 +9,44 @@ int main() {
 
     unsigned int n, w;
     std::cin >> n >> w;
-    if (w == 0) {
-        std::cout << "0\n0";
-        return 0;
-    }
-
     std::vector<unsigned int> weights(n);
-    for (unsigned int i = 0; i < n; i++) {
+    for (unsigned int i = 0; i < n; ++i) {
         std::cin >> weights[i];
     }
 
-    std::vector<std::vector<unsigned int> > dp(n + 1, std::vector<unsigned int>(w + 1, 0));
-    for (unsigned int i = 1; i <= n; i++) {
-        for (unsigned int j = 1; j <= w; j++) {
-            if (j >= weights[i - 1]) {
-                dp[i][j] = std::max(dp[i - 1][j], dp[i - 1][j - weights[i - 1]] + weights[i - 1]);
+    std::vector<std::vector<unsigned int> > dp(n + 1, std::vector<unsigned int>(w + 1));
+    for (unsigned int i = 1; i <= n; ++i) {
+        dp[i][0] = 0;
+    }
+    for (unsigned int j = 0; j <= w; ++j) {
+        dp[0][j] = 0;
+    }
+    for (unsigned int i = 1; i <= n; ++i) {
+        unsigned int weight = weights[i - 1];
+        std::vector<unsigned int>& cur_dp = dp[i];
+        std::vector<unsigned int>& prev_dp = dp[i - 1];
+        for (unsigned int j = 1; j <= w; ++j) {
+            if (j >= weight) {
+                cur_dp[j] = std::max(prev_dp[j], prev_dp[j - weight] + weight);
             } else {
-                dp[i][j] = dp[i - 1][j];
+                cur_dp[j] = prev_dp[j];
             }
         }
     }
-    std::cout << dp[n][w] << "\n";
 
+    std::cout << dp[n][w] << "\n";
     std::vector<unsigned int> ans;
-    unsigned int cur_i = n, cur_j = w;
-    while (cur_i != 0) {
-        if (dp[cur_i][cur_j] == dp[cur_i - 1][cur_j]) {
-            cur_i--;
-        } else {
-            ans.push_back(weights[cur_i - 1]);
-            cur_j -= weights[--cur_i];
+    std::vector<unsigned int>::reverse_iterator weight_iter = weights.rbegin();
+    for (std::vector<std::vector<unsigned int> >::reverse_iterator now = dp.rbegin();
+         now != dp.rend() - 1; ++now, ++weight_iter) {
+        if ((*now)[w] != (*(now + 1))[w]) {
+            ans.push_back(*weight_iter);
+            w -= *weight_iter;
         }
     }
     std::sort(ans.begin(), ans.end());
     std::cout << ans.size() << "\n";
-    for (unsigned int i = 0; i < ans.size(); i++) {
+    for (unsigned int i = 0; i < ans.size(); ++i) {
         std::cout << ans[i] << " ";
     }
 }

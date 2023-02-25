@@ -3,10 +3,15 @@
 #include <iomanip>
 #include <vector>
 #include <algorithm>
+#include <tuple>
+#define Interval std::tuple<double, double, double>
 
-struct Interval {
-    double left, right, weight;
-};
+bool operator<(const Interval& first, const Interval& second) {
+    return std::get<1>(first) < std::get<1>(second);
+}
+bool operator<(const double first, const Interval& second) {
+    return first < std::get<1>(second);
+}
 
 int main() {
     std::ios::sync_with_stdio(false);
@@ -15,22 +20,23 @@ int main() {
     unsigned int n;
     std::cin >> n;
     std::vector<Interval> intervals(n);
-    for (unsigned int i = 0; i < n; i++) {
-        std::cin >> intervals[i].left >> intervals[i].right >> intervals[i].weight;
+    for (unsigned int i = 0; i < n; ++i) {
+        std::cin >> std::get<0>(intervals[i]) >> std::get<1>(intervals[i]) >>
+            std::get<2>(intervals[i]);
     }
-    std::sort(
-        intervals.begin(), intervals.end(),
-        [](const Interval& first, const Interval& second) { return first.right < second.right; });
+    std::sort(intervals.begin(), intervals.end(),
+              static_cast<bool (*)(const Interval&, const Interval&)>(operator<));
 
-    std::vector<std::pair<double, double> > dp(n + 1, {0, 0});
-    for (unsigned int i = 1; i <= n; i++) {
-        unsigned int left = i;
-        while (left > 0 && intervals[left - 1].right > intervals[i - 1].left) {
-            left--;
-        }
-
-        dp[i].first = std::max(dp[left].first, dp[left].second) + intervals[i - 1].weight;
-        dp[i].second = std::max(dp[i - 1].first, dp[i - 1].second);
+    std::vector<double> dp(n + 1);
+    dp[0] = 0;
+    std::vector<double>::iterator dp_cur = dp.begin() + 1;
+    for (std::vector<Interval>::iterator cur = intervals.begin(); cur != intervals.end();
+         ++cur, ++dp_cur) {
+        unsigned int last_taken_index =
+            std::upper_bound(intervals.begin(), cur, std::get<0>(*cur),
+                             static_cast<bool (*)(const double, const Interval&)>(operator<)) -
+            intervals.begin();
+        *dp_cur = std::max(dp[last_taken_index] + std::get<2>(*cur), *(dp_cur - 1));
     }
-    std::cout << std::fixed << std::setprecision(5) << std::max(dp[n].first, dp[n].second);
+    std::cout << std::fixed << std::setprecision(5) << dp[n];
 }
