@@ -1,7 +1,7 @@
 set -x
-index_file="BaAA/week5/b/index.cpp"
-solution_file="BaAA/week5/b/index.cpp"
-formatted_file="BaAA/week5/b/formatted.cpp"
+index_file="BaAA/week6/b/dumb.cpp"
+solution_file="BaAA/week6/b/dumb.cpp"
+formatted_file="BaAA/week6/b/formatted.cpp"
 
 rm $formatted_file
 cp $solution_file solution_save.cpp
@@ -14,6 +14,10 @@ g++ $index_file -fsanitize=address,undefined -fno-sanitize-recover=all -std=c++1
 mv $solution_file $formatted_file
 cp solution_save.cpp $solution_file
 rm solution_save.cpp
+
+echo "---------------------------------------------------------------------------------------------------------------------------"
+cpplint $formatted_file
+echo "---------------------------------------------------------------------------------------------------------------------------"
 
 ./solution.exe
 rm solution.exe
