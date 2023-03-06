@@ -3,20 +3,30 @@
 #include <cstdint>
 #include <vector>
 
-std::vector < std::vector <uint64_t> > cache;
-uint64_t f(int i, int j, int n, int m)
+int n, m;
+__uint128_t cache[50][30] = { };
+__uint128_t solve(int i, int j)
 {
     if (i == 0 && j == 0) return 1;
-    if (i < 0 || j < 0 || i > n || j > m) return 0;
+    if (i < 0 || j < 0 || i >= n || j >= m) return 0;
     if (cache[i][j] != 0) return cache[i][j];
-    return cache[i][j] = f(i - 2, j + 1, n, m) + f(i - 2, j - 1, n, m) + f(i + 1, j - 2, n, m) + f(i - 1, j - 2, n, m);
+    return cache[i][j] = solve(i - 2, j + 1) + solve(i - 2, j - 1) + solve(i + 1, j - 2) + solve(i - 1, j - 2);
+}
+
+void print(__uint128_t number)
+{
+    if (number == 0) return;
+    print(number / 10);
+    std::cout << (unsigned int)(number % 10);
 }
 
 int main()
 {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
-    unsigned int n, m; std::cin >> n >> m;
-    cache.resize(n, std::vector <uint64_t>(m, 0));
-    n--; m--; std::cout << f(n, m, n, m);
+
+    std::cin >> n >> m;
+    __uint128_t ans = solve(n - 1, m - 1);
+    if (ans == 0) { std::cout << 0; return 0; }
+    print(ans);
 }

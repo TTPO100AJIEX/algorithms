@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstdint>
 #include <vector>
+#include <utility>
 #include <algorithm>
 
 struct Item
@@ -9,10 +10,11 @@ struct Item
     unsigned int weight;
     unsigned int price;
 
-    bool operator< (const Item& other)
+    bool operator< (const Item& other) const
     {
-        if (this->weight * other.price == other.weight * this->price) return this->weight > other.weight;
-        return this->weight * other.price < other.weight * this->price;
+        uint64_t mul1 = this->weight * other.price, mul2 = other.weight * this->price;
+        if (mul1 == mul2) return this->weight > other.weight;
+        return mul1 < mul2;
     }
 };
 
@@ -21,11 +23,10 @@ int main()
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
     
-    unsigned int n, w;
-    std::cin >> n >> w;
+    unsigned int n, w; std::cin >> n >> w;
     std::vector <Item> items(n);
-    for (unsigned int i = 0; i < n; ++i) std::cin >> items[i].weight;
-    for (unsigned int i = 0; i < n; ++i) std::cin >> items[i].price;
+    for (Item& item : items) std::cin >> item.weight;
+    for (Item& item : items) std::cin >> item.price;
     std::sort(items.begin(), items.end());
 
     unsigned int sumWeight = 0;
@@ -33,13 +34,11 @@ int main()
     std::vector <Item> takenItems;
     for (const Item& item : items)
     {
-        if (item.weight <= w)
-        {
-            sumWeight += item.weight;
-            sumPrice += item.price;
-            takenItems.push_back(item);
-            w -= item.weight;
-        }
+        if (item.weight > w) continue;
+        w -= item.weight;
+        sumWeight += item.weight;
+        sumPrice += item.price;
+        takenItems.push_back(item);
     }
 
     std::cout << sumPrice << "\n" << sumWeight << "\n" << takenItems.size() << "\n";

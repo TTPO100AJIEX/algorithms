@@ -476,6 +476,6 @@ int main()
     unsigned int n, m;
     std::cin >> n >> m;
     if (n <= 25) { f1(n - 1, m); return 0; }
-    if (n <= 40) { f2(n - 25, m); return 0; }
-    f3(n - 40, m);
+    if (n <= 40) { f2(n - 26, m); return 0; }
+    f3(n - 41, m);
 }

@@ -1,6 +1,6 @@
 set -x
-index_file="BaAA/week6/e/index.cpp"
-solution_file="BaAA/week6/e/index.cpp"
+index_file="BaAA/week6/e/down.cpp"
+solution_file="BaAA/week6/e/down.cpp"
 formatted_file="BaAA/week6/e/formatted.cpp"
 
 rm $formatted_file

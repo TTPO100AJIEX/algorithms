@@ -1,26 +1,27 @@
 #include <ios>
 #include <iostream>
-#include <cstdint>
 #include <utility>
 #include <algorithm>
 #include <vector>
 
-constexpr uint64_t kMaxLevel = 2000000;
-constexpr uint64_t kModulus = 1000000007;
+constexpr unsigned int kMaxLevel = 2000000;
+constexpr unsigned int kModulus = 1000000007;
 
 int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
-    std::vector<std::pair<uint64_t, uint64_t> > answers(kMaxLevel + 1);
-
+    std::vector<std::pair<unsigned int, unsigned int> > answers(kMaxLevel);
     answers[0] = {0, 0};
     answers[1] = {0, 0};
-    for (unsigned int i = 2; i <= kMaxLevel; ++i) {
-        answers[i].first = (answers[i - 1].second + 2 * answers[i - 2].second + 4) % kModulus;
-        answers[i].second = (std::max(answers[i - 1].first, answers[i - 1].second) +
-                             2 * std::max(answers[i - 2].first, answers[i - 2].second)) %
-                            kModulus;
+
+    for (std::vector<std::pair<unsigned int, unsigned int> >::iterator now = answers.begin() + 2;
+         now != answers.end(); ++now) {
+        std::vector<std::pair<unsigned int, unsigned int> >::iterator prev1 = now - 1,
+                                                                      prev2 = now - 2;
+        now->first = (prev1->second + (prev2->second << 1) + 4) % kModulus;
+        now->second = (prev1->first + (prev2->first << 1)) % kModulus;
+        now->first = std::max(now->first, now->second);
     }
 
     unsigned int n;
@@ -28,7 +29,6 @@ int main() {
     for (unsigned int i = 0; i < n; ++i) {
         unsigned int index;
         std::cin >> index;
-        --index;
-        std::cout << std::max(answers[index].first, answers[index].second) << "\n";
+        std::cout << answers[index - 1].first << "\n";
     }
 }
