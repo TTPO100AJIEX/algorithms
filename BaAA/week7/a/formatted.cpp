@@ -1,5 +1,6 @@
 #include <ios>
 #include <iostream>
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -7,46 +8,44 @@ int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
-    std::string s, t;
-    std::cin >> s >> t;
-    s += "!";
-    if (s.size() == 1 || t.empty()) {
-        std::cout << "0"
-                  << "\n";
+    std::string pattern, text;
+    std::cin >> pattern >> text;
+    if (pattern.empty()) {
+        std::cout << 0 << '\n';
         return 0;
     }
+    size_t pattern_size = pattern.size(), text_size = text.size();
+    pattern += '!';
 
-    std::vector<unsigned int> br(s.size());
-    br[0] = 0;
-    std::vector<unsigned int> brs(s.size());
-    brs[0] = 0;
-    for (unsigned int i = 1; i < s.size() - 1; ++i) {
-        unsigned int index = i - 1;
-        while (index != 0 && s[i] != s[br[index]]) {
-            index = br[index] - 1;
+    std::vector<unsigned int> pattern_blocks(pattern_size), pattern_blocks_specific(pattern_size);
+    pattern_blocks[0] = pattern_blocks_specific[0] = 0;
+    for (unsigned int i = 1; i < pattern_size; ++i) {
+        unsigned int prefix_size = pattern_blocks[i - 1];
+        while (prefix_size != 0 && pattern[i] != pattern[prefix_size]) {
+            prefix_size = pattern_blocks[prefix_size - 1];
         }
-        br[i] = br[index] + (s[i] == s[br[index]]);
+        pattern_blocks[i] = prefix_size + (pattern[i] == pattern[prefix_size]);
 
-        if (s[br[i]] != s[i + 1]) {
-            brs[i] = br[i];
+        if (pattern[pattern_blocks[i]] != pattern[i + 1]) {
+            pattern_blocks_specific[i] = pattern_blocks[i];
         } else {
-            brs[i] = (br[i] == 0) ? 0 : brs[br[i] - 1];
+            pattern_blocks_specific[i] =
+                (pattern_blocks[i] == 0) ? 0 : pattern_blocks_specific[pattern_blocks[i] - 1];
         }
     }
 
     std::vector<unsigned int> answers;
-    unsigned int matched = 0;
-    for (unsigned int i = 0; i < t.size(); ++i) {
-        while (matched != 0 && s[matched] != t[i]) {
-            matched = brs[matched - 1];
+    for (unsigned int i = 0, matched = 0; i < text_size; ++i) {
+        while (matched != 0 && pattern[matched] != text[i]) {
+            matched = pattern_blocks_specific[matched - 1];
         }
-
-        if (s[matched] == t[i]) {
+        if (pattern[matched] == text[i]) {
             ++matched;
         }
-        if (matched == s.size() - 1) {
-            matched = brs[matched - 1];
-            answers.push_back(i - s.size() + 2);
+
+        if (matched == pattern_size) {
+            matched = pattern_blocks_specific[matched - 1];
+            answers.push_back(i - pattern_size + 1);
         }
     }
     std::cout << answers.size() << '\n';
