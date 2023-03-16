@@ -5,33 +5,26 @@
 #include <vector>
 #include <algorithm>
 
-unsigned int damerauLevenshteinDistance(const std::string& s1, const std::string& s2) {
+unsigned int levenshteinDistance(const std::string& s1, const std::string& s2) {
     const std::string& smaller = (s1.size() < s2.size() ? s1 : s2);
     const std::string& bigger = (s1.size() < s2.size() ? s2 : s1);
 
-    std::vector<unsigned int> prev2(smaller.size() + 1, (1 << 31)), prev(smaller.size() + 1),
-        cur(smaller.size() + 1);
-    std::iota(prev.begin(), prev.end(), 0);
+    static std::vector<unsigned int> dp(4001);
+    std::iota(dp.begin(), dp.begin() + smaller.size() + 1, 0);
 
     for (unsigned int i = 0; i < bigger.size(); ++i) {
-        cur[0] = i + 1;
+        unsigned int save = i;
+        ++dp[0];
+        char symbol = bigger[i];
         for (unsigned int j = 0; j < smaller.size(); ++j) {
-            unsigned int ans;
-            if (bigger[i] == smaller[j]) {
-                ans = prev[j];
-            } else {
-                ans = std::min(std::min(prev[j], prev[j + 1]), cur[j]) + 1;
+            if (symbol != smaller[j]) {
+                save = std::min(std::min(dp[j], dp[j + 1]), save) + 1;
             }
-            if (i != 0 && j != 0 && bigger[i] == smaller[j - 1] && bigger[i - 1] == smaller[j]) {
-                ans = std::min(ans, prev2[j - 1] + (bigger[i] != smaller[j]));
-            }
-            cur[j + 1] = ans;
+            std::swap(dp[j + 1], save);
         }
-        std::swap(prev2, prev);
-        std::swap(prev, cur);
     }
 
-    return prev[smaller.size()];
+    return dp[smaller.size()];
 }
 
 int main() {
@@ -45,6 +38,6 @@ int main() {
     for (unsigned int i = 0; i < n; ++i) {
         std::getline(std::cin, s1);
         std::getline(std::cin, s2);
-        std::cout << damerauLevenshteinDistance(s1, s2) << ' ';
+        std::cout << levenshteinDistance(s1, s2) << ' ';
     }
 }
