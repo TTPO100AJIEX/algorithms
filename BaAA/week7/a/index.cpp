@@ -12,7 +12,8 @@ int main()
     std::string pattern, text; std::cin >> pattern >> text;
     if (pattern.size() == 0)
     {
-        std::cout << 0 << '\n';
+        std::cout << text.size() + 1 << '\n';
+        for (unsigned int i = 0; i <= text.size(); ++i) std::cout << i << '\n';
         return 0;
     }
     size_t patternSize = pattern.size(), textSize = text.size();
