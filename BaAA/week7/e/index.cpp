@@ -4,42 +4,16 @@
 #include <vector>
 #include <string>
 
-bool accepts(const std::string& s1, const std::string& s2, unsigned int maxErrors)
+bool accepts(const std::string& s1, const std::string& s2, unsigned int maxErrors, unsigned int index1, unsigned int index2, unsigned int curErrors)
 {
-    const std::string& smaller = (s1.size() < s2.size() ? s1 : s2);
-    const std::string& bigger = (s1.size() < s2.size() ? s2 : s1);
+    if (curErrors > maxErrors) return false;
+    if (index1 == s1.size()) return (curErrors + s2.size() <= maxErrors + index2); // Delete remaining
+    if (index2 == s2.size()) return (curErrors + s1.size() <= maxErrors + index1); // Delete remaining
 
-    static std::vector< std::pair <unsigned int, unsigned int> > prev, cur;
-    prev.clear(); prev.emplace_back(0, 0);
-    for (char symbol : bigger)
-    {
-        cur.clear();
-        for (unsigned int i = 0; i < prev.size(); ++i)
-        {
-            std::pair <unsigned int, unsigned int> state = prev[i];
-            if (smaller[state.first] == symbol)
-            {
-                if (state.first == smaller.size()) continue;
-                cur.emplace_back(state.first + 1, state.second); // Correct symbol
-            }
-            else
-            {
-                if (state.second == maxErrors) continue;
-                ++state.second;
-                cur.emplace_back(state.first, state.second); // Insert into smaller
-                if (state.first == smaller.size()) continue;
-                ++state.first;
-                cur.emplace_back(state.first, state.second); // Change in smaller
-                prev.emplace_back(state.first, state.second); // Delete from smaller
-            }
-        }
-        std::swap(prev, cur);
-    }
-    for (std::pair <unsigned int, unsigned int> state : prev)
-    {
-        if (state.second + smaller.size() <= maxErrors + state.first) return true;
-    }
-    return false;
+    if (s1[index1] == s2[index2]) return accepts(s1, s2, maxErrors, index1 + 1, index2 + 1, curErrors); // Correct
+    return accepts(s1, s2, maxErrors, index1, index2 + 1, curErrors + 1) // Insert
+            || accepts(s1, s2, maxErrors, index1 + 1, index2 + 1, curErrors + 1) // Change
+            || accepts(s1, s2, maxErrors, index1 + 1, index2, curErrors + 1); // Delete
 }
 
 int main()
@@ -56,7 +30,7 @@ int main()
     {
         std::string query; std::cin >> query;
         unsigned int answer = 0;
-        for (const std::string& word : dictionary) answer += accepts(word, query, maxDistance);
+        for (const std::string& word : dictionary) answer += accepts(word, query, maxDistance, 0, 0, 0);
         std::cout << answer << '\n';
     }
 }

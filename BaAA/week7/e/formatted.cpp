@@ -4,44 +4,24 @@
 #include <vector>
 #include <string>
 
-bool accepts(const std::string& s1, const std::string& s2, unsigned int max_errors) {
-    const std::string& smaller = (s1.size() < s2.size() ? s1 : s2);
-    const std::string& bigger = (s1.size() < s2.size() ? s2 : s1);
+bool accepts(const std::string& s1, const std::string& s2, unsigned int max_errors,
+             unsigned int index1, unsigned int index2, unsigned int cur_errors) {
+    if (cur_errors > max_errors) {
+        return false;
+    }
+    if (index1 == s1.size()) {
+        return (cur_errors + s2.size() <= max_errors + index2);  // Delete remaining
+    }
+    if (index2 == s2.size()) {
+        return (cur_errors + s1.size() <= max_errors + index1);  // Delete remaining
+    }
 
-    static std::vector<std::pair<unsigned int, unsigned int> > prev, cur;
-    prev.clear();
-    prev.emplace_back(0, 0);
-    for (char symbol : bigger) {
-        cur.clear();
-        for (unsigned int i = 0; i < prev.size(); ++i) {
-            std::pair<unsigned int, unsigned int> state = prev[i];
-            if (smaller[state.first] == symbol) {
-                if (state.first == smaller.size()) {
-                    continue;
-                }
-                cur.emplace_back(state.first + 1, state.second);  // Correct symbol
-            } else {
-                if (state.second == max_errors) {
-                    continue;
-                }
-                ++state.second;
-                cur.emplace_back(state.first, state.second);  // Insert into smaller
-                if (state.first == smaller.size()) {
-                    continue;
-                }
-                ++state.first;
-                cur.emplace_back(state.first, state.second);   // Change in smaller
-                prev.emplace_back(state.first, state.second);  // Delete from smaller
-            }
-        }
-        std::swap(prev, cur);
+    if (s1[index1] == s2[index2]) {
+        return accepts(s1, s2, max_errors, index1 + 1, index2 + 1, cur_errors);  // Correct
     }
-    for (const std::pair<unsigned int, unsigned int>& state : prev) {
-        if (state.second + smaller.size() <= max_errors + state.first) {
-            return true;
-        }
-    }
-    return false;
+    return accepts(s1, s2, max_errors, index1, index2 + 1, cur_errors + 1)         // Insert
+           || accepts(s1, s2, max_errors, index1 + 1, index2 + 1, cur_errors + 1)  // Change
+           || accepts(s1, s2, max_errors, index1 + 1, index2, cur_errors + 1);     // Delete
 }
 
 int main() {
@@ -62,7 +42,7 @@ int main() {
         std::cin >> query;
         unsigned int answer = 0;
         for (const std::string& word : dictionary) {
-            answer += accepts(word, query, max_distance);
+            answer += accepts(word, query, max_distance, 0, 0, 0);
         }
         std::cout << answer << '\n';
     }
