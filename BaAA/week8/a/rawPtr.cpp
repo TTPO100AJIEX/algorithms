@@ -1,7 +1,6 @@
 #include <ios>
 #include <iostream>
 #include <string>
-#include <memory>
 #include <functional>
 #include <set>
 #include <iterator>
@@ -12,11 +11,11 @@ struct Node
 {
     char symbol = 0;
     unsigned int weight;
-    std::shared_ptr<Node> left = nullptr;
-    std::shared_ptr<Node> right = nullptr;
+    Node* left = nullptr;
+    Node* right = nullptr;
 
     Node(char symbol, unsigned int weight) : symbol(symbol), weight(weight) { }
-    Node(std::shared_ptr<Node> left, std::shared_ptr<Node> right) : weight(left->weight + right->weight), left(left), right(right) { }
+    Node(Node* left, Node* right) : weight(left->weight + right->weight), left(left), right(right) { }
 
     void buildCodes(std::string* storage, std::string cur = "")
     {
@@ -31,10 +30,13 @@ struct Node
             storage[this->symbol - 'a'] = cur;
         }
     }
-};
 
-typedef std::function<bool(const std::shared_ptr<Node>&, const std::shared_ptr<Node>&)> Comparator;
-typedef std::multiset<std::shared_ptr<Node>, Comparator> SetType;
+    ~Node()
+    {
+        delete this->left;
+        delete this->right;
+    }
+};
 
 int main()
 {
@@ -46,23 +48,26 @@ int main()
     unsigned int counter[symbolsSize] = { 0 };
     for (char symbol : data) ++counter[symbol - 'a'];
     
-    SetType nodes([](const std::shared_ptr<Node>& first, const std::shared_ptr<Node>& second) { return first->weight > second->weight; });
+    std::function<bool(Node*, Node*)> cmp = [](const Node* first, const Node* second) { return first->weight > second->weight; };
+    std::multiset<Node*, std::function<bool(Node*, Node*)>> nodes(cmp);
     for (unsigned int i = 0; i < symbolsSize; ++i)
     {
-        if (counter[i] != 0) nodes.insert(std::make_shared<Node>(i + 'a', counter[i]));
+        if (counter[i] != 0) nodes.insert(new Node(i + 'a', counter[i]));
     }
     std::cout << nodes.size() << ' ';
 
     while (nodes.size() != 1)
     {
-        SetType::iterator last = std::prev(nodes.end()), second = std::prev(last);
-        std::shared_ptr<Node> node = std::make_shared<Node>(*last, *second);
+        std::multiset<Node*, std::function<bool(Node*, Node*)>>::iterator last = std::prev(nodes.end()), second = std::prev(last);
+        Node* node = new Node(*last, *second);
         nodes.erase(second, nodes.end());
         nodes.insert(node);
     }
 
     std::string codes[symbolsSize] = { "" };
-    (*(nodes.begin()))->buildCodes(codes);
+    Node* root = *(nodes.begin());
+    root->buildCodes(codes);
+    delete root;
     
     unsigned int encodedSize = 0;
     for (unsigned int i = 0; i < data.size(); ++i) encodedSize += codes[data[i] - 'a'].size();

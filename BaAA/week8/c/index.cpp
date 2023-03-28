@@ -1,37 +1,29 @@
 #include <ios>
 #include <iostream>
-#include <string>
+#include <vector>
 
 int main()
 {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
-    std::string data;
-    std::cin >> data;
-    std::string encoded = "0";
-    for (unsigned int i = 0, next = 2; i < data.size(); ++i)
+    std::vector<bool> encoded(1, false);
+    while (true)
     {
-        if (encoded.size() == next - 1) { encoded += '0'; next *= 2; }
-        encoded += data[i];
-    }
+        char symbol = std::cin.get();
+        if (symbol != '0' && symbol != '1') break;
+        if ((encoded.size() & (encoded.size() + 1)) == 0) encoded.push_back(false);
+        encoded.push_back(symbol - '0');
 
-    for (unsigned int i = 1; i < encoded.size(); ++i)
-    {
-        if (encoded[i] == '0' || (i & (i + 1)) == 0) continue;
-        unsigned int column = i + 1, bitNumber = 0;
+        if (!encoded.back()) continue;
+        unsigned int column = encoded.size(), bitShift = 1;
         while (column > 0)
         {
-            if (column % 2 == 1)
-            {
-                unsigned int index = (1 << bitNumber) - 1;
-                if (encoded[index] == '1') encoded[index] = '0';
-                else encoded[index] = '1';
-            }
-            column /= 2;
-            ++bitNumber;
+            if ((column & 1) == 1) encoded[bitShift - 1] = !encoded[bitShift - 1];
+            column >>= 1;
+            bitShift <<= 1;
         }
     }
 
-    std::cout << encoded;
+    for (bool bit : encoded) std::cout << bit;
 }
