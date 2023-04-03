@@ -10,8 +10,5 @@
         "debug": "node scripts/run.js DEBUG",
         "test": "node scripts/run.js TEST",
         "time": "node scripts/run.js TIME"
-    },
-    "dependencies": {
-        "exceljs": "^4.3.0"
     }
 }

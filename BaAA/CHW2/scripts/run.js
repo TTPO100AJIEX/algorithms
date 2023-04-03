@@ -3,15 +3,14 @@ import { execSync, execFileSync } from 'child_process';
 import { algorithms, alphabets, patterns, runs, substitutionSymbols, texts } from "./config.js";
 const MODE = process.argv.at(-1);
 
+
+/*----------------------------COMPILE----------------------------*/
 const modeFolder = `bin/${MODE}`;
 fs.rmSync(modeFolder, { recursive: true, force: true });
 fs.mkdirSync(modeFolder, { recursive: true });
 
-const timeResult = { };
 for (const algorithm of algorithms)
 {
-    console.log(`-------------------${algorithm.toUpperCase()}-------------------`);
-
     const executableName = `${modeFolder}/${algorithm}.exe`;
     switch (MODE)
     {
@@ -25,25 +24,27 @@ for (const algorithm of algorithms)
             console.error(`Wrong MODE ${MODE} specified!`);
             process.exit(-1);
     }
+}
 
-    timeResult[algorithm] = { };
-    for (const textSize of texts)
+
+/*----------------------------RUN----------------------------*/
+if (MODE == "TEST" || MODE == "DEBUG")
+{
+    for (const algorithm of algorithms)
     {
-        for (const alphabet of alphabets)
-        {
-            const textId = `${textSize}-${alphabet}`;
-            timeResult[algorithm][textId] = { };
-            let testsLog = [ ], testsVerdict = "OK";
-            patterns: for (const substitutionSymbolsAmount of substitutionSymbols)
-            {
-                timeResult[algorithm][textId][substitutionSymbolsAmount] = { };
-                for (const patternSize of patterns)
-                {
-                    timeResult[algorithm][textId][substitutionSymbolsAmount][patternSize] = [ ];
-                    const textFolder = `tests/${textId}`, patternFolder = `${textFolder}/patterns-${substitutionSymbolsAmount}/${patternSize}`;
+        console.log(`-------------------${algorithm.toUpperCase()}-------------------`);
 
-                    if (MODE == "TEST" || MODE == "DEBUG")
+        const executableName = `${modeFolder}/${algorithm}.exe`;
+        for (const textSize of texts)
+        {
+            for (const alphabet of alphabets)
+            {
+                let testsLog = [ ], testsVerdict = "OK";
+                patterns: for (const substitutionSymbolsAmount of substitutionSymbols)
+                {
+                    for (const patternSize of patterns)
                     {
+                        const textFolder = `tests/${textSize}-${alphabet}`, patternFolder = `${textFolder}/patterns-${substitutionSymbolsAmount}/${patternSize}`;
                         const patternInfo = `Pattern of size ${patternSize.toString().padEnd(4, " ")} with ${substitutionSymbolsAmount} substitution symbols`;
                         const answer = fs.readFileSync(`${patternFolder}/out.txt`, "utf-8");
                         try
@@ -51,35 +52,24 @@ for (const algorithm of algorithms)
                             const [ output, _ ] = execFileSync(executableName, [ `${textFolder}/text.txt`, `${patternFolder}/in.txt` ]).toString().split('\n');
                             if (output == answer)
                             {
-                                if (MODE == "DEBUG") testsLog.push(`${patternInfo}: ✅ OK`);
+                                testsLog.push(`${patternInfo}: ✅ OK`);
                             }
                             else
                             {
                                 testsVerdict = "WA";
-                                if (MODE == "DEBUG") testsLog.push(`${patternInfo}: ❌ WA`);
+                                testsLog.push(`${patternInfo}: ❌ WA`);
                                 break patterns;
                             }
                         }
                         catch(err)
                         {
                             testsVerdict = "RE";
-                            if (MODE == "DEBUG") testsLog.push(`${patternInfo}: ⚠️  RE`);
+                            testsLog.push(`${patternInfo}: ⚠️  RE`);
                             break patterns;
                         }
                     }
-                    if (MODE == "TIME")
-                    {
-                        for (let runIndex = 0; runIndex < runs; runIndex++)
-                        {
-                            const [ _, time ] = execFileSync(executableName, [ `${textFolder}/text.txt`, `${patternFolder}/in.txt` ]).toString().split('\n');
-                            timeResult[algorithm][textId][substitutionSymbolsAmount][patternSize].push(Number(time.slice(time.indexOf(":") + 2, -2)));
-                        }
-                    }
                 }
-            }
 
-            if (MODE == "TEST" || MODE == "DEBUG")
-            {
                 const textInfo = `Text ${textSize.toString().padEnd(6, " ")} on alphabet ${alphabet.toString().padEnd(4, " ")}`;
                 switch(testsVerdict)
                 {
@@ -93,4 +83,35 @@ for (const algorithm of algorithms)
     }
 }
 
-if (MODE == "TIME") fs.writeFileSync("report/data.json", JSON.stringify(timeResult, null, 4), "utf-8");
+if (MODE == "TIME")
+{
+    const timeResult = { };
+    for (const textSize of texts)
+    {
+        for (const alphabet of alphabets)
+        {
+            const textId = `${textSize}-${alphabet}`;
+            timeResult[textId] = { };
+            for (const substitutionSymbolsAmount of substitutionSymbols)
+            {
+                timeResult[textId][substitutionSymbolsAmount] = { };
+                for (const patternSize of patterns)
+                {
+                    timeResult[textId][substitutionSymbolsAmount][patternSize] = { };
+                    const textFolder = `tests/${textId}`, patternFolder = `${textFolder}/patterns-${substitutionSymbolsAmount}/${patternSize}`;
+                    for (let runIndex = 0; runIndex < runs; runIndex++)
+                    {
+                        for (const algorithm of algorithms)
+                        {
+                            const executableName = `${modeFolder}/${algorithm}.exe`;
+                            const [ _, time ] = execFileSync(executableName, [ `${textFolder}/text.txt`, `${patternFolder}/in.txt` ]).toString().split('\n');
+                            (timeResult[textId][substitutionSymbolsAmount][patternSize][algorithm] ??= [ ]).push(Number(time.slice(time.indexOf(":") + 2, -2)));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fs.writeFileSync("report/data.json", JSON.stringify(timeResult, null, 4), "utf-8");
+}

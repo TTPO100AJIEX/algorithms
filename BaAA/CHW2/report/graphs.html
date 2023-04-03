@@ -1,0 +1,132 @@
+<html>
+    <head>
+        <script src="https://www.gstatic.com/charts/loader.js"></script>
+        <style>
+            * { line-height: 1.5; margin: 0; padding: 0; }
+            [hidden] { display: none !important; content-visibility: hidden !important; }
+            
+            body > label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; font-weight: bold; text-align: center; }
+            ::file-selector-button { font-size: 1.25rem; padding: 0.25rem; }
+
+            main { overflow: auto; }
+            #control { position: sticky; top: 0; left: 0; width: 100%; height: min-content; }
+            #control > h1 { text-align: center; }
+            #control > div { display: flex; justify-content: space-evenly; gap: 1rem; padding: 0 1rem; }
+            #control > div > button { padding: 0.5rem; width: 100%; }
+            #control > div > button.chosen { background: blue; color: white; }
+
+            main > div { display: grid; grid-template-columns: repeat(var(--columns), 1fr); grid-template-rows: repeat(var(--rows), 1fr); }
+            #algorithms { --rows: 4; --columns: 5; }
+            #texts { --rows: 5; --columns: 3; }
+            #substitutions { --rows: 4; --columns: 3; }
+        </style>
+        <script type="module">
+            if (!("google" in window)) alert("Google charts failed to load! Please check your internet connection!");
+            google.charts.load('current', { 'packages': ['corechart'] });
+            
+            document.getElementById("file_input").addEventListener("change", ev =>
+            {
+                let reader = new FileReader();
+                reader.addEventListener("load", ev => drawCharts(JSON.parse(ev.currentTarget.result)));
+                reader.readAsText(ev.target.files[0], "utf-8");
+            });
+
+
+            function algorithmToString(algorithm)
+            {
+                switch(algorithm)
+                {
+                    case "naive": return "Наивный алгоритм";
+                    case "kmp": return "КМП";
+                    case "kmp-optimized": return "Оптимизированный КМП";
+                }
+            }
+            function substitutionsToString(substitutions)
+            {
+                return `${substitutions} символов подстановки`;
+            }
+            function textToSizeString(textId)
+            {
+                return `${textId.split('-')[0]} символов`;
+            }
+            function textToAlphabetString(textId)
+            {
+                return `алфавит ${textId.split('-')[1]}`;
+            }
+
+            function drawCharts(data)
+            {
+                document.getElementsByTagName("label").item(0).hidden = true;
+                Array.from(document.getElementsByTagName("button")).forEach(button =>
+                {
+                    document.getElementById(button.dataset.controlled).hidden = true;
+                    button.addEventListener("click", ev =>
+                    {
+                        Array.from(document.getElementsByTagName("button")).forEach(button =>
+                        {
+                            button.classList.remove("chosen");
+                            document.getElementById(button.dataset.controlled).hidden = true;
+                        });
+                        button.classList.add("chosen");
+                        document.getElementById(button.dataset.controlled).hidden = false;
+                    });
+                });
+                document.getElementsByTagName("main").item(0).hidden = false;
+                console.log(data)
+                for (const textId of Object.keys(data))
+                {
+                    for (const substitutionSymbols of Object.keys(data[textId]))
+                    {
+                        let chartData = [
+                            [ "Pattern size", ...Object.keys(Object.values(data[textId][substitutionSymbols])[0]).sort().map(algorithmToString) ]
+                        ];
+                        for (const patternSize of Object.keys(data[textId][substitutionSymbols]))
+                        {
+                            let row = [ Math.round(Number(patternSize)) ];
+                            for (const algorithm of Object.keys(data[textId][substitutionSymbols][patternSize]).sort())
+                            {
+                                row.push(data[textId][substitutionSymbols][patternSize][algorithm].reduce((acc, cur) => acc + cur, 0) / data[textId][substitutionSymbols][patternSize][algorithm].length);
+                            }
+                            chartData.push(row);
+                        }
+                        let div = document.createElement("div");
+                        document.getElementById("algorithms").appendChild(div);
+                        let chart = new google.visualization.LineChart(div);
+                        chart.draw(google.visualization.arrayToDataTable(chartData), {
+                            width: 1000, height: 500,
+                            chartArea: { width: 700, height: 400, left: 100 },
+                            fontSize: 12,
+                            focusTarget: "category",
+                            curveType: "function",
+                            pointSize: 4,
+                            title: `${substitutionsToString(substitutionSymbols)}, ${textToSizeString(textId)}, ${textToAlphabetString(textId)}`,
+                            titleTextStyle: { fontSize: 16 },
+                            explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1, axis: 'vertical' },
+                            hAxis: { title: 'Длина шаблона', titleTextStyle: { fontSize: 14, bold: true } },
+                            vAxis: { title: 'Время выполнения (ns)', titleTextStyle: { fontSize: 14, bold: true } }
+                        });
+                    }
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <label>
+            Пожалуйста, загрузите data.json эксперимента<br>
+            <input type="file" accept=".json" id="file_input">
+        </label>
+        <main hidden>
+            <header id="control">
+                <h1>Сравнение результатов</h1>
+                <div>
+                    <button data-controlled="algorithms">По алгоритмам</button>
+                    <button data-controlled="texts">По текстам</button>
+                    <button data-controlled="substitutions">По количеству символов подстановки</button>
+                </div>
+            </header>
+            <div id="algorithms"></div>
+            <div id="texts"></div>
+            <div id="substitutions"></div>
+        </main>
+    </body>
+</html>
