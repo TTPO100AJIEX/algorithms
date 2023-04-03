@@ -1,0 +1,2 @@
+g++ algorithms/implementations/kmp.cpp algorithms/index.cpp -fsanitize=address,undefined -fno-sanitize-recover=all -std=c++17 -Werror -Wsign-compare -o bin/index.exe
+./bin/index.exe tests/10000-01/text.txt tests/10000-01/patterns-0/100/in.txt
