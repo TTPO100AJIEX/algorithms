@@ -43,8 +43,13 @@ function generatePattern(text, patternSize, substitutionSymbolsAmount)
     }
     const test = pattern.join('');
 
-    const regex = new RegExp(test.replaceAll("?", "."));
-    const answer = regex.exec(text).index.toString();
+    const regex = new RegExp(test.replaceAll("?", "."), "g");
+    let answer = [ ], match;
+    while (match = regex.exec(text))
+    {
+        answer.push(match.index);
+        regex.lastIndex = match.index + 1;
+    }
 
-    return { test, answer };
+    return { test, answer: answer.join(' ') };
 }

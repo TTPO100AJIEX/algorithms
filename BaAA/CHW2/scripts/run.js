@@ -57,14 +57,14 @@ if (MODE == "TEST" || MODE == "DEBUG")
                             else
                             {
                                 testsVerdict = "WA";
-                                testsLog.push(`${patternInfo}: ❌ WA`);
+                                testsLog.push(`${patternInfo}: ❌ WA (${output})`);
                                 break patterns;
                             }
                         }
                         catch(err)
                         {
                             testsVerdict = "RE";
-                            testsLog.push(`${patternInfo}: ⚠️  RE`);
+                            testsLog.push(`${patternInfo}: ⚠️  RE (${err})`);
                             break patterns;
                         }
                     }
@@ -91,6 +91,7 @@ if (MODE == "TIME")
         for (const alphabet of alphabets)
         {
             const textId = `${textSize}-${alphabet}`;
+            console.log(`-------------------${textId}-------------------`);
             timeResult[textId] = { };
             for (const substitutionSymbolsAmount of substitutionSymbols)
             {

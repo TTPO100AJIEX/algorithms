@@ -5,20 +5,20 @@
             * { line-height: 1.5; margin: 0; padding: 0; }
             [hidden] { display: none !important; content-visibility: hidden !important; }
             
-            body > label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; font-weight: bold; text-align: center; }
+            body > label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; font-weight: bold; text-align: center; overflow: auto; }
             ::file-selector-button { font-size: 1.25rem; padding: 0.25rem; }
 
-            main { overflow: auto; }
-            #control { position: sticky; top: 0; left: 0; width: 100%; height: min-content; }
+            main { width: max-content; }
+            #control { position: sticky; top: 0; left: 0; height: min-content; width: 100vw; z-index: 2; background: white; }
             #control > h1 { text-align: center; }
             #control > div { display: flex; justify-content: space-evenly; gap: 1rem; padding: 0 1rem; }
             #control > div > button { padding: 0.5rem; width: 100%; }
             #control > div > button.chosen { background: blue; color: white; }
 
-            main > div { display: grid; grid-template-columns: repeat(var(--columns), 1fr); grid-template-rows: repeat(var(--rows), 1fr); }
+            main > div { display: grid; grid-template-columns: repeat(var(--columns), 1fr); grid-template-rows: repeat(var(--rows), 1fr); gap: 1rem; }
             #algorithms { --rows: 4; --columns: 5; }
-            #texts { --rows: 5; --columns: 3; }
-            #substitutions { --rows: 4; --columns: 3; }
+            #texts { --rows: 5; --columns: 5; }
+            #substitutions { --rows: 4; --columns: 5; }
         </style>
         <script type="module">
             if (!("google" in window)) alert("Google charts failed to load! Please check your internet connection!");
@@ -37,13 +37,20 @@
                 switch(algorithm)
                 {
                     case "naive": return "Наивный алгоритм";
+                    case "naive-no-break": return "Наивный алгоритм (полный)";
                     case "kmp": return "КМП";
                     case "kmp-optimized": return "Оптимизированный КМП";
+                    case "aho-corasick": return "Ахо-Корасик";
                 }
             }
             function substitutionsToString(substitutions)
             {
-                return `${substitutions} символов подстановки`;
+                switch (substitutions)
+                {
+                    case 0: return "0 символов подстановки";
+                    case 1: return "1 символ подстановки";
+                    default: return `${substitutions} символа подстановки`;
+                }
             }
             function textToSizeString(textId)
             {
@@ -53,13 +60,28 @@
             {
                 return `алфавит ${textId.split('-')[1]}`;
             }
+            function textToString(textId)
+            {
+                return textToSizeString(textId) + ", " + textToAlphabetString(textId);
+            }
 
+
+            let algorithms = [ ], texts = [ ], substitutions = [ ], patterns = [ ];
             function drawCharts(data)
             {
+                texts = Object.keys(data).sort();
+                substitutions = Object.keys(data[texts[0]]).map(e => Number(e)).sort((a, b) => a - b);
+                patterns = Object.keys(data[texts[0]][substitutions[0]]).map(e => Number(e)).sort((a, b) => a - b);
+                algorithms = Object.keys(data[texts[0]][substitutions[0]][patterns[0]]).sort();
+
                 document.getElementsByTagName("label").item(0).hidden = true;
+                document.querySelector("button[data-controlled=algorithms]").addEventListener("click", drawAlgorithms.bind(this, data));
+                document.querySelector("button[data-controlled=texts]").addEventListener("click", drawTexts.bind(this, data));
+                document.querySelector("button[data-controlled=substitutions]").addEventListener("click", drawSubstitutions.bind(this, data));
+                document.getElementsByTagName("main").item(0).hidden = false;
+
                 Array.from(document.getElementsByTagName("button")).forEach(button =>
                 {
-                    document.getElementById(button.dataset.controlled).hidden = true;
                     button.addEventListener("click", ev =>
                     {
                         Array.from(document.getElementsByTagName("button")).forEach(button =>
@@ -71,35 +93,131 @@
                         document.getElementById(button.dataset.controlled).hidden = false;
                     });
                 });
-                document.getElementsByTagName("main").item(0).hidden = false;
-                console.log(data)
-                for (const textId of Object.keys(data))
+            }
+            
+
+            function drawAlgorithms(data)
+            {
+                Array.from(document.getElementsByTagName("button")).forEach(button =>
                 {
-                    for (const substitutionSymbols of Object.keys(data[textId]))
+                    button.classList.remove("chosen");
+                    document.getElementById(button.dataset.controlled).hidden = true;
+                });
+                document.querySelector("button[data-controlled=algorithms]").classList.add("chosen");
+                Array.from(document.getElementById("algorithms").children).forEach(el => el.remove());
+                document.getElementById("algorithms").hidden = false;
+                
+                for (const textId of texts)
+                {
+                    for (const substitutionSymbols of substitutions)
                     {
-                        let chartData = [
-                            [ "Pattern size", ...Object.keys(Object.values(data[textId][substitutionSymbols])[0]).sort().map(algorithmToString) ]
-                        ];
-                        for (const patternSize of Object.keys(data[textId][substitutionSymbols]))
+                        let chartData = [ [ "Pattern size", ...algorithms.map(algorithmToString) ] ];
+                        for (const patternSize of patterns)
                         {
-                            let row = [ Math.round(Number(patternSize)) ];
-                            for (const algorithm of Object.keys(data[textId][substitutionSymbols][patternSize]).sort())
+                            let row = [ patternSize ];
+                            for (const algorithm of algorithms)
                             {
-                                row.push(data[textId][substitutionSymbols][patternSize][algorithm].reduce((acc, cur) => acc + cur, 0) / data[textId][substitutionSymbols][patternSize][algorithm].length);
+                                const runs = data[textId][substitutionSymbols][patternSize][algorithm];
+                                row.push(runs.reduce((acc, cur) => acc + cur, 0) / runs.length);
                             }
                             chartData.push(row);
                         }
-                        let div = document.createElement("div");
-                        document.getElementById("algorithms").appendChild(div);
+                        const div = document.createElement("div"); document.getElementById("algorithms").appendChild(div);
                         let chart = new google.visualization.LineChart(div);
                         chart.draw(google.visualization.arrayToDataTable(chartData), {
-                            width: 1000, height: 500,
-                            chartArea: { width: 700, height: 400, left: 100 },
+                            width: 800, height: 400,
                             fontSize: 12,
                             focusTarget: "category",
                             curveType: "function",
                             pointSize: 4,
-                            title: `${substitutionsToString(substitutionSymbols)}, ${textToSizeString(textId)}, ${textToAlphabetString(textId)}`,
+                            title: `${textToString(textId)}, ${substitutionsToString(substitutionSymbols)}`,
+                            titleTextStyle: { fontSize: 16 },
+                            explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1, axis: 'vertical' },
+                            hAxis: { title: 'Длина шаблона', titleTextStyle: { fontSize: 14, bold: true } },
+                            vAxis: { title: 'Время выполнения (ns)', titleTextStyle: { fontSize: 14, bold: true } }
+                        });
+                    }
+                }
+            }
+
+            function drawTexts(data)
+            {
+                Array.from(document.getElementsByTagName("button")).forEach(button =>
+                {
+                    button.classList.remove("chosen");
+                    document.getElementById(button.dataset.controlled).hidden = true;
+                });
+                document.querySelector("button[data-controlled=texts]").classList.add("chosen");
+                Array.from(document.getElementById("texts").children).forEach(el => el.remove());
+                document.getElementById("texts").hidden = false;
+                
+                for (const algorithm of algorithms)
+                {
+                    for (const substitutionSymbols of substitutions)
+                    {
+                        let chartData = [ [ "Pattern size", ...texts.map(textToString) ] ];
+                        for (const patternSize of patterns)
+                        {
+                            let row = [ patternSize ];
+                            for (const textId of texts)
+                            {
+                                const runs = data[textId][substitutionSymbols][patternSize][algorithm];
+                                row.push(runs.reduce((acc, cur) => acc + cur, 0) / runs.length);
+                            }
+                            chartData.push(row);
+                        }
+                        const div = document.createElement("div"); document.getElementById("texts").appendChild(div);
+                        let chart = new google.visualization.LineChart(div);
+                        chart.draw(google.visualization.arrayToDataTable(chartData), {
+                            width: 800, height: 400,
+                            fontSize: 12,
+                            focusTarget: "category",
+                            curveType: "function",
+                            pointSize: 4,
+                            title: `${algorithmToString(algorithm)}, ${substitutionsToString(substitutionSymbols)}`,
+                            titleTextStyle: { fontSize: 16 },
+                            explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1, axis: 'vertical' },
+                            hAxis: { title: 'Длина шаблона', titleTextStyle: { fontSize: 14, bold: true } },
+                            vAxis: { title: 'Время выполнения (ns)', titleTextStyle: { fontSize: 14, bold: true } }
+                        });
+                    }
+                }
+            }
+            function drawSubstitutions(data)
+            {
+                Array.from(document.getElementsByTagName("button")).forEach(button =>
+                {
+                    button.classList.remove("chosen");
+                    document.getElementById(button.dataset.controlled).hidden = true;
+                });
+                document.querySelector("button[data-controlled=substitutions]").classList.add("chosen");
+                Array.from(document.getElementById("substitutions").children).forEach(el => el.remove());
+                document.getElementById("substitutions").hidden = false;
+                
+                for (const textId of texts)
+                {
+                    for (const algorithm of algorithms)
+                    {
+                        let chartData = [ [ "Pattern size", ...substitutions.map(substitutionsToString) ] ];
+                        for (const patternSize of patterns)
+                        {
+                            let row = [ patternSize ];
+                            for (const substitutionSymbols of substitutions)
+                            {
+                                const runs = data[textId][substitutionSymbols][patternSize][algorithm];
+                                row.push(runs.reduce((acc, cur) => acc + cur, 0) / runs.length);
+                            }
+                            chartData.push(row);
+                        }
+                        const div = document.createElement("div"); document.getElementById("substitutions").appendChild(div);
+                        let chart = new google.visualization.LineChart(div);
+                        chart.draw(google.visualization.arrayToDataTable(chartData), {
+                            width: 800, height: 400,
+                            fontSize: 12,
+                            focusTarget: "category",
+                            curveType: "function",
+                            pointSize: 4,
+                            title: `${textToString(textId)}, ${algorithmToString(algorithm)}`,
                             titleTextStyle: { fontSize: 16 },
                             explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1, axis: 'vertical' },
                             hAxis: { title: 'Длина шаблона', titleTextStyle: { fontSize: 14, bold: true } },
@@ -124,9 +242,9 @@
                     <button data-controlled="substitutions">По количеству символов подстановки</button>
                 </div>
             </header>
-            <div id="algorithms"></div>
-            <div id="texts"></div>
-            <div id="substitutions"></div>
+            <div id="algorithms" hidden></div>
+            <div id="texts" hidden></div>
+            <div id="substitutions" hidden></div>
         </main>
     </body>
 </html>
