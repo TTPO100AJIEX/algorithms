@@ -15,8 +15,10 @@ unsigned int lcs(std::string_view first, std::string_view second) {
     }
 
     static std::vector<unsigned int> dp;
-    dp.clear();
-    dp.resize(second.size(), 0);
+    if (dp.size() < second.size()) {
+        dp.resize(second.size());
+    }
+    std::fill(dp.begin(), dp.begin() + second.size(), 0);
 
     unsigned int ans = 0;
     for (unsigned int i = 0; i < first.size(); ++i) {
@@ -30,8 +32,11 @@ unsigned int lcs(std::string_view first, std::string_view second) {
                     mem++;
                     std::swap(mem, dp[j]);
                 }
-                ans = std::max(ans, dp[j]);
+                if (dp[j] > ans) {
+                    ans = dp[j];
+                }
             } else {
+                mem = dp[j];
                 dp[j] = 0;
             }
         }
@@ -48,13 +53,34 @@ int main() {
     std::string_view ab = std::string_view(ab_storage);
     std::string_view ca = std::string_view(ca_storage);
     std::string_view bc = std::string_view(bc_storage);
+
+    std::vector<std::vector<unsigned int> > a_bx_ca(ab.size() + 1,
+                                                    std::vector<unsigned int>(ca.size() + 1));
+    for (unsigned int i = 0; i <= ab.size(); ++i) {
+        for (unsigned int j = 0; j <= ca.size(); ++j) {
+            a_bx_ca[i][j] = lcs(ab.substr(0, i), ca.substr(j));
+        }
+    }
+    std::vector<std::vector<unsigned int> > b_cx_ab(bc.size() + 1,
+                                                    std::vector<unsigned int>(ab.size() + 1));
+    for (unsigned int i = 0; i <= bc.size(); ++i) {
+        for (unsigned int j = 0; j <= ab.size(); ++j) {
+            b_cx_ab[i][j] = lcs(bc.substr(0, i), ab.substr(j));
+        }
+    }
+    std::vector<std::vector<unsigned int> > c_ax_bc(ca.size() + 1,
+                                                    std::vector<unsigned int>(bc.size() + 1));
+    for (unsigned int i = 0; i <= ca.size(); ++i) {
+        for (unsigned int j = 0; j <= bc.size(); ++j) {
+            c_ax_bc[i][j] = lcs(ca.substr(0, i), bc.substr(j));
+        }
+    }
+
     unsigned int best_answer = 0;
     for (unsigned int i = 0; i <= ab.size(); ++i) {
         for (unsigned int j = 0; j <= ca.size(); ++j) {
             for (unsigned int x = 0; x <= bc.size(); ++x) {
-                unsigned int answer = lcs(ab.substr(0, i), ca.substr(j)) +
-                                      lcs(ab.substr(i), bc.substr(0, x)) +
-                                      lcs(ca.substr(0, j), bc.substr(x));
+                unsigned int answer = a_bx_ca[i][j] + b_cx_ab[x][i] + c_ax_bc[j][x];
                 if (answer > best_answer) {
                     best_answer = answer;
                 }
