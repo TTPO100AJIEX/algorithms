@@ -66,7 +66,7 @@ std::set<unsigned int> search(std::string_view text, std::string_view pattern)
                 {
                     // Remove answers that deemed correct before but proved wrong now
                     while (answerIter != answer.end() && *answerIter < index) answer.erase(answerIter++);
-                    if (*answerIter == index) answerIter++; // The answer is correct
+                    if (answerIter != answer.end() && *answerIter == index) answerIter++; // The answer is correct
                 }
             }
         }

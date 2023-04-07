@@ -11,11 +11,13 @@ for (const textSize of texts)
         const folder = `tests/${textSize}-${alphabet}`;
         fs.mkdirSync(folder, { recursive: true });
         fs.writeFileSync(`${folder}/text.txt`, text, "utf-8");
+        const patternStartIndex = Math.floor(Math.random() * (text.length - Math.max(...patterns)));
         for (const patternSize of patterns)
         {
             for (const substitutionSymbolsAmount of substitutionSymbols)
             {
-                const { test, answer } = generatePattern(text, patternSize, substitutionSymbolsAmount);
+                const pattern = text.substring(patternStartIndex, patternStartIndex + patternSize);
+                const { test, answer } = generateTest(text, pattern, substitutionSymbolsAmount);
                 const testFolder = `${folder}/patterns-${substitutionSymbolsAmount}/${patternSize}`;
                 fs.mkdirSync(testFolder, { recursive: true });
                 fs.writeFileSync(`${testFolder}/in.txt`, test, "utf-8");
@@ -31,13 +33,15 @@ function generateText(textSize, alphabet)
 {
     return new Array(textSize).fill(undefined).map((_, index) => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
 }
-function generatePattern(text, patternSize, substitutionSymbolsAmount)
+function generateTest(text, pattern, substitutionSymbolsAmount)
 {
-    const startIndex = Math.floor(Math.random() * (text.length - patternSize));
-    let pattern = text.substring(startIndex, startIndex + patternSize).split('');
+    pattern = pattern.split('');
     for (let i = 0; i < substitutionSymbolsAmount; i++)
     {
-        const index = Math.floor(Math.random() * pattern.length);
+        const partSize = Math.floor(pattern.length / (substitutionSymbolsAmount + 1));
+        const index = partSize * (i + 1) + Math.round((Math.random() - 0.5) * partSize * 0.6);
+
+        // const index = Math.floor(Math.random() * pattern.length);
         if (pattern[index] == '?') i--;
         pattern[index] = '?';
     }
