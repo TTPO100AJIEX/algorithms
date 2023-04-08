@@ -2,7 +2,13 @@
     <head>
         <script src="https://www.gstatic.com/charts/loader.js"></script>
         <style>
-            * { line-height: 1.5; margin: 0; padding: 0; }
+            *
+            {
+                line-height: 1.5; margin: 0; padding: 0;
+                --algorithms: 6;
+                --subtitutions: 5;
+                --texts: 4;
+            }
             [hidden] { display: none !important; content-visibility: hidden !important; }
             
             body > label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; font-weight: bold; text-align: center; overflow: auto; }
@@ -16,9 +22,9 @@
             #control > div > button.chosen { background: blue; color: white; }
 
             main > div { display: grid; grid-template-columns: repeat(var(--columns), 1fr); grid-template-rows: repeat(var(--rows), 1fr); gap: 1rem; }
-            #algorithms { --rows: 4; --columns: 5; }
-            #texts { --rows: 5; --columns: 5; }
-            #substitutions { --rows: 4; --columns: 5; }
+            #algorithms { --rows: var(--texts); --columns: var(--subtitutions); }
+            #texts { --rows: var(--algorithms); --columns: var(--subtitutions); }
+            #substitutions { --rows: var(--texts); --columns: var(--algorithms); }
         </style>
         <script type="module">
             if (!("google" in window)) alert("Google charts failed to load! Please check your internet connection!");
@@ -36,11 +42,12 @@
             {
                 switch(algorithm)
                 {
-                    case "naive": return "Наивный алгоритм";
-                    case "naive-no-break": return "Наивный алгоритм (полный)";
+                    case "naive": return "Наивный";
+                    case "naive-no-break": return "Наивный полный";
                     case "kmp": return "КМП";
-                    case "kmp-optimized": return "Оптимизированный КМП";
+                    case "kmp-optimized": return "Уточ. КМП";
                     case "aho-corasick": return "Ахо-Корасик";
+                    case "stl": return "STL";
                 }
             }
             function substitutionsToString(substitutions)
@@ -96,6 +103,17 @@
             }
             
 
+            function syncButtons(type)
+            {
+                Array.from(document.getElementsByTagName("button")).forEach(button =>
+                {
+                    button.classList.remove("chosen");
+                    document.getElementById(button.dataset.controlled).hidden = true;
+                });
+                document.querySelector(`button[data-controlled=${type}]`).classList.add("chosen");
+                Array.from(document.getElementById(type).children).forEach(el => el.remove());
+                document.getElementById(type).hidden = false;
+            }
             function average(arr)
             {
                 const removeItems = Math.floor(arr.length / 10); // Remove 10% worst and 10% best
@@ -104,67 +122,49 @@
                 console.log(arr.length);
                 return arr.reduce((acc, cur) => acc + cur, 0) / arr.length;
             }
+            function drawChart(chartData, type, title, hAxisTitle, vAxisTitle)
+            {
+                const div = document.createElement("div");
+                document.getElementById(type).appendChild(div);
+                const chart = new google.visualization.LineChart(div);
+
+                let trendlines = [ ];
+                for (let i = 1; i < chartData[0].length; i++)
+                {
+                    trendlines[i - 1] = { type: 'linear', showR2: true, visibleInLegend: true, labelInLegend: chartData[0][i] };
+                }
+
+                chart.draw(google.visualization.arrayToDataTable(chartData),
+                {
+                    width: 900, height: 450, chartArea: { width: 600 },
+                    fontSize: 12, focusTarget: "category", curveType: "function", pointSize: 4, lineWidth: 3,
+                    title: title, titleTextStyle: { fontSize: 16 },
+                    explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1, axis: 'vertical' },
+                    hAxis: { title: hAxisTitle, titleTextStyle: { fontSize: 14, bold: true } },
+                    vAxis: { title: vAxisTitle, titleTextStyle: { fontSize: 14, bold: true } },
+                    trendlines: trendlines
+                });
+            }
+
             function drawAlgorithms(data)
             {
-                Array.from(document.getElementsByTagName("button")).forEach(button =>
-                {
-                    button.classList.remove("chosen");
-                    document.getElementById(button.dataset.controlled).hidden = true;
-                });
-                document.querySelector("button[data-controlled=algorithms]").classList.add("chosen");
-                Array.from(document.getElementById("algorithms").children).forEach(el => el.remove());
-                document.getElementById("algorithms").hidden = false;
-                
+                syncButtons("algorithms");
                 for (const textId of texts)
                 {
                     for (const substitutionSymbols of substitutions)
                     {
-                        let chartData = [ [ "Pattern size", ...algorithms.map(algorithmToString) ] ];
-                        for (const patternSize of patterns)
-                        {
-                            let row = [ patternSize ];
-                            for (const algorithm of algorithms) row.push(average(data[textId][substitutionSymbols][patternSize][algorithm]));
-                            chartData.push(row);
-                        }
-                        const div = document.createElement("div"); document.getElementById("algorithms").appendChild(div);
-                        let chart = new google.visualization.LineChart(div);
-                        chart.draw(google.visualization.arrayToDataTable(chartData), {
-                            width: 800, height: 400,
-                            fontSize: 12,
-                            focusTarget: "category",
-                            curveType: "function",
-                            pointSize: 4,
-                            lineWidth: 3,
-                            title: `${textToString(textId)}, ${substitutionsToString(substitutionSymbols)}`,
-                            titleTextStyle: { fontSize: 16 },
-                            explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1, axis: 'vertical' },
-                            hAxis: { title: 'Длина шаблона', titleTextStyle: { fontSize: 14, bold: true } },
-                            vAxis: { title: 'Время выполнения (ns)', titleTextStyle: { fontSize: 14, bold: true } },
-                            trendlines:
-                            {
-                                0:
-                                {
-                                    type: 'linear',
-                                    labelInLegend: 'test',
-                                    showR2: true,
-                                    visibleInLegend: true
-                                }
-                            }
-                        });
+                        const chartData = [
+                            [ "Pattern size", ...algorithms.map(algorithmToString) ],
+                            ...patterns.map(patternSize => [ patternSize, ...algorithms.map(algorithm => average(data[textId][substitutionSymbols][patternSize][algorithm])) ] )
+                        ];
+                        drawChart(chartData, "algorithms", `${textToString(textId)}, ${substitutionsToString(substitutionSymbols)}`, 'Длина шаблона', 'Время выполнения (ns)');
                     }
                 }
             }
 
             function drawTexts(data)
             {
-                Array.from(document.getElementsByTagName("button")).forEach(button =>
-                {
-                    button.classList.remove("chosen");
-                    document.getElementById(button.dataset.controlled).hidden = true;
-                });
-                document.querySelector("button[data-controlled=texts]").classList.add("chosen");
-                Array.from(document.getElementById("texts").children).forEach(el => el.remove());
-                document.getElementById("texts").hidden = false;
+                syncButtons("texts");
                 
                 for (const algorithm of algorithms)
                 {
@@ -196,14 +196,7 @@
             }
             function drawSubstitutions(data)
             {
-                Array.from(document.getElementsByTagName("button")).forEach(button =>
-                {
-                    button.classList.remove("chosen");
-                    document.getElementById(button.dataset.controlled).hidden = true;
-                });
-                document.querySelector("button[data-controlled=substitutions]").classList.add("chosen");
-                Array.from(document.getElementById("substitutions").children).forEach(el => el.remove());
-                document.getElementById("substitutions").hidden = false;
+                syncButtons("substitutions");
                 
                 for (const textId of texts)
                 {

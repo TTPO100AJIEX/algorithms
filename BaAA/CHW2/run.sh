@@ -1,0 +1,2 @@
+g++ algorithms/implementations/stl.cpp algorithms/index.cpp -fsanitize=address,undefined -fno-sanitize-recover=all -std=c++20 -Werror -Wall -Wextra -o index.exe
+./index.exe tests/100000-01/text.txt tests/100000-01/patterns-0/100/in.txt
