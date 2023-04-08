@@ -9,11 +9,11 @@ std::set<unsigned int> search(std::string_view text, std::string_view pattern)
     text = text.substr(1);
     pattern = pattern.substr(1);
 
-    std::regex exp("(eco)");
+    std::regex exp("(e.o)");
     std::smatch res;
     std::string str = "first second third forth second";
 
-    std::string::const_iterator searchStart( str.cbegin() );
+    std::string::const_iterator searchStart = str.cbegin() );
     while ( std::regex_search( searchStart, str.cend(), res, exp ) )
     {
         std::cout << ( searchStart == str.cbegin() ? "" : " " ) << res[0];  
