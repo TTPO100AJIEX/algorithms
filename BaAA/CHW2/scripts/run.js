@@ -15,7 +15,7 @@ for (const algorithm of algorithms)
     switch (MODE)
     {
         case "DEBUG": case "TEST":
-            execSync(`g++ algorithms/implementations/${algorithm}.cpp algorithms/index.cpp -fsanitize=address,undefined -fno-sanitize-recover=all -std=c++20 -Werror -Wall -Wextra -o ${executableName}`);
+            execSync(`g++ algorithms/implementations/${algorithm}.cpp algorithms/index.cpp -fsanitize=address,undefined -fno-sanitize-recover=all -std=c++20 -Werror -Wall -Wextra -O2 -o ${executableName}`);
             break;
         case "TIME":
             execSync(`g++ algorithms/implementations/${algorithm}.cpp algorithms/index.cpp -std=c++20 -O2 -o ${executableName}`);
