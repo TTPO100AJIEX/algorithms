@@ -39,7 +39,7 @@ function generateTest(text, pattern, substitutionSymbolsAmount)
     for (let i = 0; i < substitutionSymbolsAmount; i++)
     {
         const partSize = Math.floor(pattern.length / (substitutionSymbolsAmount + 1));
-        const index = partSize * (i + 1) + Math.round((Math.random() - 0.5) * partSize * 0.6);
+        const index = partSize * (i + 1) + Math.round((Math.random() - 0.5) * partSize * 0.5);
 
         // const index = Math.floor(Math.random() * pattern.length);
         if (pattern[index] == '?') i--;

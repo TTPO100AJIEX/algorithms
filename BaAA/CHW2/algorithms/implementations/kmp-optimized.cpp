@@ -36,8 +36,8 @@ std::set<unsigned int> search(std::string_view text, std::string_view pattern)
             while (prefixSize != 0 && part[i] != part[prefixSize]) prefixSize = patternBlocks[prefixSize - 1];
             patternBlocks[i] = prefixSize + (part[i] == part[prefixSize]);
 
-            if (i + 1 == pattern.size() || pattern[patternBlocks[i]] != pattern[i + 1]) patternBlocksSpecific[i] = patternBlocks[i];
-            else patternBlocksSpecific[i] = (patternBlocks[i] == 0) ? 0 : patternBlocksSpecific[patternBlocks[i ] - 1];
+            if (i + 1 == part.size() || part[patternBlocks[i]] != part[i + 1]) patternBlocksSpecific[i] = patternBlocks[i];
+            else patternBlocksSpecific[i] = (patternBlocks[i] == 0) ? 0 : patternBlocksSpecific[patternBlocks[i] - 1];
         }
 
         std::set<unsigned int>::iterator answerIter = answer.begin(); // Iterator to delete answers that do not continue

@@ -5,8 +5,6 @@
 #include <algorithm>
 #include <queue>
 
-#include <iostream>
-
 class Trie
 {
 public:
@@ -19,10 +17,7 @@ public:
     static std::vector< std::set<unsigned int> > findOccurences(std::string_view text, const std::vector<std::string_view>& patterns, Alphabet alphabet)
     {
         Trie trie(alphabet);
-        for (unsigned int i = 0; i < patterns.size(); ++i)
-        {
-            trie.add(patterns[i], i);
-        }
+        for (unsigned int i = 0; i < patterns.size(); ++i) trie.add(patterns[i], i);
         trie.calculateSuffixLinks();
 
         std::vector< std::set<unsigned int> > answer(patterns.size());
@@ -36,7 +31,7 @@ public:
             {
                 for (unsigned int index : cur->patternIndexes) answer[index].insert(i + 1 - patterns[index].size());
             }
-            while (cur->isLinkTerminal)
+            while (cur != cur->suffixLink && cur->isLinkTerminal)
             {
                 cur = cur->suffixLink;
                 if (cur->isTerminal)
@@ -52,7 +47,7 @@ private:
     Trie* parent = nullptr;
     std::vector<Trie*> children;
     Trie* suffixLink = nullptr;
-    int symbol;
+    int symbol = 0;
     Alphabet alphabet;
     bool isTerminal = false;
     bool isLinkTerminal = false;
@@ -85,14 +80,11 @@ private:
         if (!this->parent) // root
         {
             this->suffixLink = this;
+            this->isLinkTerminal = this->suffixLink->isTerminal;
             return;
         }
         this->suffixLink = this->parent->suffixLink->next(this->symbol);
-        if (this->suffixLink == this) // first level
-        {
-            this->suffixLink = this->parent;
-            return;
-        }
+        if (this->suffixLink == this) this->suffixLink = this->parent; // first level
         this->isLinkTerminal = this->suffixLink->isTerminal || this->suffixLink->isLinkTerminal;
     }
     void calculateSuffixLinks()

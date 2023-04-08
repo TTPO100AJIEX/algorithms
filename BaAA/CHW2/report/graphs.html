@@ -5,8 +5,8 @@
             *
             {
                 line-height: 1.5; margin: 0; padding: 0;
-                --algorithms: 6;
-                --subtitutions: 5;
+                --algorithms: 5;
+                --subtitutions: 6;
                 --texts: 4;
             }
             [hidden] { display: none !important; content-visibility: hidden !important; }
@@ -47,7 +47,6 @@
                     case "kmp": return "КМП";
                     case "kmp-optimized": return "Уточ. КМП";
                     case "aho-corasick": return "Ахо-Корасик";
-                    case "stl": return "STL";
                 }
             }
             function substitutionsToString(substitutions)
@@ -117,12 +116,10 @@
             function average(arr)
             {
                 const removeItems = Math.floor(arr.length / 10); // Remove 10% worst and 10% best
-                console.log(arr.length, removeItems);
                 if (removeItems != 0) arr = arr.sort().slice(removeItems, -removeItems);
-                console.log(arr.length);
                 return arr.reduce((acc, cur) => acc + cur, 0) / arr.length;
             }
-            function drawChart(chartData, type, title, hAxisTitle, vAxisTitle)
+            function drawChart(chartData, type, title)
             {
                 const div = document.createElement("div");
                 document.getElementById(type).appendChild(div);
@@ -131,7 +128,7 @@
                 let trendlines = [ ];
                 for (let i = 1; i < chartData[0].length; i++)
                 {
-                    trendlines[i - 1] = { type: 'linear', showR2: true, visibleInLegend: true, labelInLegend: chartData[0][i] };
+                    trendlines[i - 1] = { type: 'linear', showR2: true, visibleInLegend: true, labelInLegend: chartData[0][i], lineWidth: 1, pointSize: 2 };
                 }
 
                 chart.draw(google.visualization.arrayToDataTable(chartData),
@@ -140,8 +137,8 @@
                     fontSize: 12, focusTarget: "category", curveType: "function", pointSize: 4, lineWidth: 3,
                     title: title, titleTextStyle: { fontSize: 16 },
                     explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1, axis: 'vertical' },
-                    hAxis: { title: hAxisTitle, titleTextStyle: { fontSize: 14, bold: true } },
-                    vAxis: { title: vAxisTitle, titleTextStyle: { fontSize: 14, bold: true } },
+                    hAxis: { title: 'Длина шаблона', titleTextStyle: { fontSize: 14, bold: true } },
+                    vAxis: { title: 'Время выполнения (ns)', titleTextStyle: { fontSize: 14, bold: true } },
                     trendlines: trendlines
                 });
             }
@@ -157,72 +154,37 @@
                             [ "Pattern size", ...algorithms.map(algorithmToString) ],
                             ...patterns.map(patternSize => [ patternSize, ...algorithms.map(algorithm => average(data[textId][substitutionSymbols][patternSize][algorithm])) ] )
                         ];
-                        drawChart(chartData, "algorithms", `${textToString(textId)}, ${substitutionsToString(substitutionSymbols)}`, 'Длина шаблона', 'Время выполнения (ns)');
+                        drawChart(chartData, "algorithms", `${textToString(textId)}, ${substitutionsToString(substitutionSymbols)}`);
                     }
                 }
             }
-
             function drawTexts(data)
             {
                 syncButtons("texts");
-                
                 for (const algorithm of algorithms)
                 {
                     for (const substitutionSymbols of substitutions)
                     {
-                        let chartData = [ [ "Pattern size", ...texts.map(textToString) ] ];
-                        for (const patternSize of patterns)
-                        {
-                            let row = [ patternSize ];
-                            for (const textId of texts) row.push(average(data[textId][substitutionSymbols][patternSize][algorithm]));
-                            chartData.push(row);
-                        }
-                        const div = document.createElement("div"); document.getElementById("texts").appendChild(div);
-                        let chart = new google.visualization.LineChart(div);
-                        chart.draw(google.visualization.arrayToDataTable(chartData), {
-                            width: 800, height: 400,
-                            fontSize: 12,
-                            focusTarget: "category",
-                            curveType: "function",
-                            pointSize: 4,
-                            title: `${algorithmToString(algorithm)}, ${substitutionsToString(substitutionSymbols)}`,
-                            titleTextStyle: { fontSize: 16 },
-                            explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1, axis: 'vertical' },
-                            hAxis: { title: 'Длина шаблона', titleTextStyle: { fontSize: 14, bold: true } },
-                            vAxis: { title: 'Время выполнения (ns)', titleTextStyle: { fontSize: 14, bold: true } }
-                        });
+                        const chartData = [
+                            [ "Pattern size", ...texts.map(textToString) ],
+                            ...patterns.map(patternSize => [ patternSize, ...texts.map(textId => average(data[textId][substitutionSymbols][patternSize][algorithm])) ] )
+                        ];
+                        drawChart(chartData, "texts", `${algorithmToString(algorithm)}, ${substitutionsToString(substitutionSymbols)}`, 'Длина шаблона', 'Время выполнения (ns)');
                     }
                 }
             }
             function drawSubstitutions(data)
             {
                 syncButtons("substitutions");
-                
                 for (const textId of texts)
                 {
                     for (const algorithm of algorithms)
                     {
-                        let chartData = [ [ "Pattern size", ...substitutions.map(substitutionsToString) ] ];
-                        for (const patternSize of patterns)
-                        {
-                            let row = [ patternSize ];
-                            for (const substitutionSymbols of substitutions) row.push(average(data[textId][substitutionSymbols][patternSize][algorithm]));
-                            chartData.push(row);
-                        }
-                        const div = document.createElement("div"); document.getElementById("substitutions").appendChild(div);
-                        let chart = new google.visualization.LineChart(div);
-                        chart.draw(google.visualization.arrayToDataTable(chartData), {
-                            width: 800, height: 400,
-                            fontSize: 12,
-                            focusTarget: "category",
-                            curveType: "function",
-                            pointSize: 4,
-                            title: `${textToString(textId)}, ${algorithmToString(algorithm)}`,
-                            titleTextStyle: { fontSize: 16 },
-                            explorer: { maxZoomIn: 0.01, maxZoomOut: 1.25, zoomDelta: 1.1, axis: 'vertical' },
-                            hAxis: { title: 'Длина шаблона', titleTextStyle: { fontSize: 14, bold: true } },
-                            vAxis: { title: 'Время выполнения (ns)', titleTextStyle: { fontSize: 14, bold: true } }
-                        });
+                        const chartData = [
+                            [ "Pattern size", ...substitutions.map(substitutionsToString) ],
+                            ...patterns.map(patternSize => [ patternSize, ...substitutions.map(substitutionSymbols => average(data[textId][substitutionSymbols][patternSize][algorithm])) ] )
+                        ];
+                        drawChart(chartData, "substitutions", `${textToString(textId)}, ${algorithmToString(algorithm)}`, 'Длина шаблона', 'Время выполнения (ns)');
                     }
                 }
             }
