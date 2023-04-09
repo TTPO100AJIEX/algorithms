@@ -2,29 +2,14 @@
     <head>
         <script src="https://www.gstatic.com/charts/loader.js"></script>
         <style>
-            *
-            {
-                line-height: 1.5; margin: 0; padding: 0;
-                --algorithms: 4;
-                --subtitutions: 6;
-                --texts: 4;
-            }
+            * { line-height: 1.5; margin: 0; padding: 0; }
             [hidden] { display: none !important; content-visibility: hidden !important; }
             
             body > label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; font-weight: bold; text-align: center; overflow: auto; }
             ::file-selector-button { font-size: 1.25rem; padding: 0.25rem; }
 
-            main { width: max-content; }
-            #control { position: sticky; top: 0; left: 0; height: min-content; width: 100vw; z-index: 2; background: white; }
-            #control > h1 { text-align: center; }
-            #control > div { display: flex; justify-content: space-evenly; gap: 1rem; padding: 0 1rem; }
-            #control > div > button { padding: 0.5rem; width: 100%; }
-            #control > div > button.chosen { background: blue; color: white; }
-
-            main > div { display: grid; grid-template-columns: repeat(var(--columns), 1fr); grid-template-rows: repeat(var(--rows), 1fr); gap: 1rem; }
-            #algorithms { --rows: var(--texts); --columns: var(--subtitutions); }
-            #texts { --rows: var(--algorithms); --columns: var(--subtitutions); }
-            #substitutions { --rows: var(--texts); --columns: var(--algorithms); }
+            main { width: max-content; display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-rows: 3fr 1fr; gap: 1rem; }
+            p { padding: 0 1rem; overflow: auto; max-width: 900px; max-height: 150px; }
         </style>
         <script type="module">
             if (!("google" in window)) alert("Google charts failed to load! Please check your internet connection!");
@@ -71,6 +56,64 @@
                 return textToSizeString(textId) + ", " + textToAlphabetString(textId);
             }
 
+            
+            const descriptions = {
+                "10000-01":
+                {
+                    "0":    `1. Как показывают линии тренда и их коэффициенты детерминации (близкие к единице), время выполнения всех рассматриваемых алгоритмов ` + 
+                                `действительно линейно зависит от длины шаблона при отсутствии символов подстановки.\n` +
+                            `2. Тем не менее алгоритм Ахо-Корасик работает значительно дольше остальных. Но это ожидаемо: алгоритм Ахо-Корасик предназначен для ` + 
+                                `поиска вхождений нескольких подстрок в текст одновременно, из-за чего имеет большую "константу" - при работе алгоритм производит ` +
+                                `большое количество "сложных" операций, таких как выделение памяти, а также осуществляет многократный проход по искомому шаблону\n` + 
+                            `3. Интересно, что наивный алгоритм при большой длине шаблона показывает себя лучше остальных. Более того, график времени выполнения ` +
+                                `наивного алгоритма убывает с увеличением длины шалона. Это объясняется тем, что наивный алгоритм ` +
+                                `- наиболее простой из рассматриваемых, а случайность данных позволяет ему не проверять шаблон до конца каждый раз и производить значительно ` +
+                                `меньше операций, чем ожидается в худшем случае. И это подтверждается тем, что при минимальной длине шаблона наивный алгоритм не оказывается лучшим\n` +
+                            `4. Использование уточнённых граней в алгоритме Кнута-Морриса-Пратта действительно позволяет улучшить время работы и делает его более "стабильным" ` +
+                                `- отклонения от линии тренда оказываются заметно меньше\n` +
+                            `5. Линия тренда для времени выполнения алгоритма Ахо-Корасик имеет коэффициент детерминации 0.999, что, с учетом низкой зависимости реализации от входных ` + 
+                                `данных, подтверждает, что влияние внешних факторов на результаты измерений незначительно, а отклонения от линии тренда действительно вызваны лишь ` +
+                                `случайностью входных данных, а не окружением, в котором программа запускалась`,
+                    "1": "",
+                    "2": "",
+                    "3": "",
+                    "4": "",
+                    "30": ""
+                },
+                "10000-abcd":
+                {
+                    "0":    `График выглядит аналогично полученному для текста длины 10000 над алфавитом 01 без символов подстановки. Интересно отметить лишь следующее:\n` +
+                            `1. Эффективность наивного алгоритма оказывается немного хуже: при длине шаблона 100 линия практически пересекает график времени работы алгоритма ` +
+                                `Кнута-Морриса-Пратта, а пересечение с графиком времени работы алгоритма КМП происходит лишь при длине шаблона 1000 (вместо 700)\n` +
+                            `2. Абсолютная величина времени работы алгортима Ахо-Корасик увеличилась, что ожидаемо: алгоритм зависит от размера алфавита. Но время работы остальных ` +
+                                `алгоритмов уменьшилось, что также ожидаемо: чем больше длина алфавита, тем меньше вероятность, что первое "несовпадение" с шаблоном произойдёт близко ` +
+                                `к концу шаблона, а значит алгоритм быстрее "отвергнет" возможный ответ, что улучшает время работы`,
+                    "1": "",
+                    "2": "",
+                    "3": "",
+                    "4": "",
+                    "30": ""
+                },
+                "100000-01":
+                {
+                    "0": "",
+                    "1": "",
+                    "2": "",
+                    "3": "",
+                    "4": "",
+                    "30": ""
+                },
+                "100000-abcd":
+                {
+                    "0": "",
+                    "1": "",
+                    "2": "",
+                    "3": "",
+                    "4": "",
+                    "30": ""
+                }
+            };
+
 
             let algorithms = [ ], texts = [ ], substitutions = [ ], patterns = [ ];
             function drawCharts(data)
@@ -81,54 +124,43 @@
                 algorithms = Object.keys(data[texts[0]][substitutions[0]][patterns[0]]).sort();
 
                 document.getElementsByTagName("label").item(0).hidden = true;
-                document.querySelector("button[data-controlled=algorithms]").addEventListener("click", drawAlgorithms.bind(this, data));
-                document.querySelector("button[data-controlled=texts]").addEventListener("click", drawTexts.bind(this, data));
-                document.querySelector("button[data-controlled=substitutions]").addEventListener("click", drawSubstitutions.bind(this, data));
                 document.getElementsByTagName("main").item(0).hidden = false;
 
-                Array.from(document.getElementsByTagName("button")).forEach(button =>
+                for (const textId of texts)
                 {
-                    button.addEventListener("click", ev =>
+                    for (const substitutionSymbols of substitutions)
                     {
-                        Array.from(document.getElementsByTagName("button")).forEach(button =>
-                        {
-                            button.classList.remove("chosen");
-                            document.getElementById(button.dataset.controlled).hidden = true;
-                        });
-                        button.classList.add("chosen");
-                        document.getElementById(button.dataset.controlled).hidden = false;
-                    });
-                });
+                        const chartData = [
+                            [ "Pattern size", ...algorithms.map(algorithmToString) ],
+                            ...patterns.map(patternSize => [ patternSize, ...algorithms.map(algorithm => average(data[textId][substitutionSymbols][patternSize][algorithm])) ] )
+                        ];
+                        drawChart(chartData, `${textToString(textId)}, ${substitutionsToString(substitutionSymbols)}`);
+                    }
+                    for (const substitutionSymbols of substitutions)
+                    {
+                    const p = document.createElement("p"); p.innerText = descriptions[textId][substitutionSymbols];
+                    document.getElementsByTagName("main").item(0).appendChild(p);
+                    }
+                }
             }
             
 
-            function syncButtons(type)
-            {
-                Array.from(document.getElementsByTagName("button")).forEach(button =>
-                {
-                    button.classList.remove("chosen");
-                    document.getElementById(button.dataset.controlled).hidden = true;
-                });
-                document.querySelector(`button[data-controlled=${type}]`).classList.add("chosen");
-                Array.from(document.getElementById(type).children).forEach(el => el.remove());
-                document.getElementById(type).hidden = false;
-            }
             function average(arr)
             {
                 const removeItems = Math.floor(arr.length / 10); // Remove 10% worst and 10% best
                 if (removeItems != 0) arr = arr.sort().slice(removeItems, -removeItems);
                 return arr.reduce((acc, cur) => acc + cur, 0) / arr.length;
             }
-            function drawChart(chartData, type, title)
+            function drawChart(chartData, title)
             {
                 const div = document.createElement("div");
-                document.getElementById(type).appendChild(div);
+                document.getElementsByTagName("main").item(0).appendChild(div);
                 const chart = new google.visualization.LineChart(div);
 
                 let trendlines = [ ];
                 for (let i = 1; i < chartData[0].length; i++)
                 {
-                    trendlines[i - 1] = { type: 'linear', showR2: true, visibleInLegend: true, labelInLegend: chartData[0][i], lineWidth: 1, pointSize: 2 };
+                    trendlines[i - 1] = { type: 'linear', showR2: true, visibleInLegend: true, labelInLegend: `${chartData[0][i]} (тренд)`, lineWidth: 1, pointSize: 2 };
                 }
 
                 chart.draw(google.visualization.arrayToDataTable(chartData),
@@ -142,52 +174,6 @@
                     trendlines: trendlines
                 });
             }
-
-            function drawAlgorithms(data)
-            {
-                syncButtons("algorithms");
-                for (const textId of texts)
-                {
-                    for (const substitutionSymbols of substitutions)
-                    {
-                        const chartData = [
-                            [ "Pattern size", ...algorithms.map(algorithmToString) ],
-                            ...patterns.map(patternSize => [ patternSize, ...algorithms.map(algorithm => average(data[textId][substitutionSymbols][patternSize][algorithm])) ] )
-                        ];
-                        drawChart(chartData, "algorithms", `${textToString(textId)}, ${substitutionsToString(substitutionSymbols)}`);
-                    }
-                }
-            }
-            function drawTexts(data)
-            {
-                syncButtons("texts");
-                for (const algorithm of algorithms)
-                {
-                    for (const substitutionSymbols of substitutions)
-                    {
-                        const chartData = [
-                            [ "Pattern size", ...texts.map(textToString) ],
-                            ...patterns.map(patternSize => [ patternSize, ...texts.map(textId => average(data[textId][substitutionSymbols][patternSize][algorithm])) ] )
-                        ];
-                        drawChart(chartData, "texts", `${algorithmToString(algorithm)}, ${substitutionsToString(substitutionSymbols)}`, 'Длина шаблона', 'Время выполнения (ns)');
-                    }
-                }
-            }
-            function drawSubstitutions(data)
-            {
-                syncButtons("substitutions");
-                for (const textId of texts)
-                {
-                    for (const algorithm of algorithms)
-                    {
-                        const chartData = [
-                            [ "Pattern size", ...substitutions.map(substitutionsToString) ],
-                            ...patterns.map(patternSize => [ patternSize, ...substitutions.map(substitutionSymbols => average(data[textId][substitutionSymbols][patternSize][algorithm])) ] )
-                        ];
-                        drawChart(chartData, "substitutions", `${textToString(textId)}, ${algorithmToString(algorithm)}`, 'Длина шаблона', 'Время выполнения (ns)');
-                    }
-                }
-            }
         </script>
     </head>
     <body>
@@ -196,17 +182,6 @@
             <input type="file" accept=".json" id="file_input">
         </label>
         <main hidden>
-            <header id="control">
-                <h1>Сравнение результатов</h1>
-                <div>
-                    <button data-controlled="algorithms">По алгоритмам</button>
-                    <button data-controlled="texts">По текстам</button>
-                    <button data-controlled="substitutions">По количеству символов подстановки</button>
-                </div>
-            </header>
-            <div id="algorithms" hidden></div>
-            <div id="texts" hidden></div>
-            <div id="substitutions" hidden></div>
         </main>
     </body>
 </html>
