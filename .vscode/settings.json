@@ -103,6 +103,7 @@
         "cinttypes": "cpp",
         "queue": "cpp",
         "__verbose_abort": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "unordered_set": "cpp"
     }
 }

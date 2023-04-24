@@ -3,16 +3,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-
-struct Person {
-    std::string name;
-    std::vector<Person*> siblings;
-    bool visited = false;
-};
-
-bool peopleComparator(const Person* first, const Person* second) {
-    return first->name < second->name;
-}
+#include <queue>
 
 int main() {
     std::ios::sync_with_stdio(false);
@@ -20,35 +11,40 @@ int main() {
 
     unsigned int n, m;
     std::cin >> n >> m;
-    std::vector<Person> people(n);
-    for (unsigned int i = 0; i < n; i++) {
+    std::vector<std::string> names(n);
+    std::vector<std::vector<unsigned int> > edges(n);
+    for (unsigned int i = 0; i < n; ++i) {
         unsigned int index;
         std::cin >> index;
         std::cin.ignore(1);
-        std::getline(std::cin, people[index].name);
+        std::getline(std::cin, names[index]);
     }
-    for (unsigned int i = 0; i < m; i++) {
+    for (unsigned int i = 0; i < m; ++i) {
         unsigned int from, to;
         std::cin >> from >> to;
-        people[from].siblings.push_back(&people[to]);
-        people[to].siblings.push_back(&people[from]);
+        edges[from].push_back(to);
+        edges[to].push_back(from);
     }
+
     unsigned int number;
     std::cin >> number;
-    std::vector<Person*> current, next;
-    next.push_back(&people[number]);
-    people[number].visited = true;
+    std::vector<unsigned int> current, next;
+    std::vector<bool> visited(n, false);
+    next.push_back(number);
+    visited[number] = true;
     while (!next.empty()) {
         std::swap(current, next);
         next.clear();
-        std::sort(current.begin(), current.end(), peopleComparator);
-        for (Person* to_print : current) {
-            std::cout << to_print->name << '\n';
-            for (Person* sibling : to_print->siblings) {
-                if (sibling->visited) {
+        std::sort(current.begin(), current.end(), [&](unsigned int first, unsigned int second) {
+            return names[first] < names[second];
+        });
+        for (unsigned int to_print : current) {
+            std::cout << names[to_print] << '\n';
+            for (unsigned int sibling : edges[to_print]) {
+                if (visited[sibling]) {
                     continue;
                 }
-                sibling->visited = true;
+                visited[sibling] = true;
                 next.push_back(sibling);
             }
         }
