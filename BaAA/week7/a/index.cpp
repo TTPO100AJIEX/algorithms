@@ -31,7 +31,8 @@ int main()
         else patternBlocksSpecific[i] = (patternBlocks[i] == 0) ? 0 : patternBlocksSpecific[patternBlocks[i] - 1];
     }
     
-    std::vector <unsigned int> answers;
+
+    unsigned int amount = 0;
     for (unsigned int i = 0, matched = 0; i < textSize; ++i)
     {
         while (matched != 0 && pattern[matched] != text[i]) matched = patternBlocksSpecific[matched - 1];
@@ -40,9 +41,19 @@ int main()
         if (matched == patternSize)
         {
             matched = patternBlocksSpecific[matched - 1];
-            answers.push_back(i - patternSize + 1);
+            amount++;
         }
     }
-    std::cout << answers.size() << '\n';
-    for (const unsigned int& answer : answers) std::cout << answer << '\n';
+    std::cout << amount << '\n';
+    for (unsigned int i = 0, matched = 0; i < textSize; ++i)
+    {
+        while (matched != 0 && pattern[matched] != text[i]) matched = patternBlocksSpecific[matched - 1];
+        if (pattern[matched] == text[i]) ++matched;
+
+        if (matched == patternSize)
+        {
+            matched = patternBlocksSpecific[matched - 1];
+            std::cout << i - patternSize + 1 << '\n';
+        }
+    }
 }
