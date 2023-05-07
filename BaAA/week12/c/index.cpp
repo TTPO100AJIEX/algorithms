@@ -4,28 +4,64 @@
 #include <string>
 #include <algorithm>
 
-std::vector< std::vector <unsigned int> > edges;
-std::vector< std::vector <unsigned int> > edges_transposed;
-std::vector<bool> used;
-std::vector<unsigned int> order;
-unsigned int componentNumber = 0;
-std::vector< std::vector <unsigned int> > components;
-
-void dfs1(unsigned int vertex)
+class Graph
 {
-    if (used[vertex]) return;
-    used[vertex] = true;
-    for (unsigned int sibling : edges[vertex]) dfs1(sibling);
-    order.push_back(vertex);
-}
+private:
+    struct Vertex
+    {
+        std::vector<unsigned int> edges;
+        std::vector<unsigned int> edges_transposed;
+        bool used = false;
+        bool inComponent = false;
+    };
+    std::vector<Vertex> vertexes;
 
-void dfs2(unsigned int vertex)
-{
-    if (used[vertex]) return;
-    components[components.size() - 1].push_back(vertex);
-    used[vertex] = true;
-    for (unsigned int sibling : edges_transposed[vertex]) dfs2(sibling);
-}
+    void dfsDirect(unsigned int vertexIndex, std::vector<unsigned int>& order)
+    {
+        Vertex& vertex = this->vertexes[vertexIndex];
+        if (vertex.used) return;
+        vertex.used = true;
+        for (unsigned int sibling : vertex.edges) this->dfsDirect(sibling, order);
+        order.push_back(vertexIndex);
+    }
+
+    void dfsReversed(unsigned int vertexIndex, std::vector<unsigned int>& component)
+    {
+        Vertex& vertex = this->vertexes[vertexIndex];
+        if (vertex.inComponent) return;
+        vertex.inComponent = true;
+        component.push_back(vertexIndex);
+        for (unsigned int sibling : vertex.edges_transposed) this->dfsReversed(sibling, component);
+    }
+
+public:
+    Graph(unsigned int vertexes)
+    {
+        this->vertexes.resize(vertexes);
+    }
+
+    void addEdge(unsigned int from, unsigned int to)
+    {
+        this->vertexes[from].edges.push_back(to);
+        this->vertexes[to].edges_transposed.push_back(from);
+    }
+
+    std::vector< std::vector<unsigned int> > calculateComponents()
+    {
+        std::vector<unsigned int> order;
+        order.reserve(this->vertexes.size());
+        for (unsigned int i = 0; i < this->vertexes.size(); ++i) this->dfsDirect(i, order);
+        
+        std::vector< std::vector<unsigned int> > components;
+        for (std::vector<unsigned int>::const_reverse_iterator now = order.rbegin(); now != order.rend(); ++now)
+        {
+            if (this->vertexes[*now].inComponent) continue;
+            this->dfsReversed(*now, components.emplace_back());
+        }
+        return components;
+    }
+};
+
 
 
 int main()
@@ -43,34 +79,29 @@ int main()
         std::cin.ignore(1); std::getline(std::cin, names[index]);
     }
 
-    edges.resize(n);
-    edges_transposed.resize(n);
+    Graph graph(n);
     for (unsigned int i = 0; i < m; ++i)
     {
         unsigned int from, to;
         std::cin >> from >> to;
-        edges[from].push_back(to);
-        edges_transposed[to].push_back(from);
+        graph.addEdge(from, to);
     }
 
-    used.resize(n, false);
-    order.reserve(n);
-    for (unsigned int i = 0; i < n; ++i) dfs1(i);
-
-    std::fill(used.begin(), used.end(), false);
-    for (unsigned int i = 0; i < n; ++i)
+    std::vector< std::vector<unsigned int> > components = graph.calculateComponents();
+    for (std::vector<unsigned int>& component : components)
     {
-        if (used[order[n - i - 1]]) continue;
-        components.emplace_back();
-        dfs2(order[n - i - 1]);
-        std::sort(components[components.size() - 1].begin(), components[components.size() - 1].end(), [&names](const unsigned int first, const unsigned int second)
-        {
-            return names[first] < names[second];
-        });
+        std::sort(component.begin(), component.end(), [&names](const unsigned int first, const unsigned int second) { return names[first] < names[second]; });
     }
     std::sort(components.begin(), components.end(), [&names](const std::vector <unsigned int>& first, const std::vector <unsigned int>& second)
     {
-        return names[first[0]] < names[second[0]];
+        unsigned int elements = std::min(first.size(), second.size());
+        for (unsigned int i = 0; i < elements; ++i)
+        {
+            int comparison = names[first[i]].compare(names[second[i]]);
+            if (comparison < 0) return true;
+            if (comparison > 0) return false;
+        }
+        return (first.size() < second.size());
     });
 
     for (const std::vector <unsigned int>& component : components)

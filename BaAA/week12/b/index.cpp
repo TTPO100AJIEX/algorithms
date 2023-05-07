@@ -1,111 +1,142 @@
 #include <ios>
 #include <iostream>
+#include <cstdint>
 #include <vector>
-#include <set>
+#include <utility>
+#include <algorithm>
+#include <unordered_set>
 
-std::vector< std::vector <unsigned int> > edges;
-std::vector< std::vector <unsigned int> > edges_transposed;
-std::vector<bool> used;
-std::vector<unsigned int> order;
-unsigned int componentNumber = 0;
-std::vector<unsigned int> components;
-std::vector<unsigned int> component;
-
-void dfs1(unsigned int vertex)
+class Graph
 {
-    if (used[vertex]) return;
-    used[vertex] = true;
-    for (unsigned int sibling : edges[vertex]) dfs1(sibling);
-    order.push_back(vertex);
-}
-
-void dfs2(unsigned int vertex)
-{
-    if (components[vertex] != (1 << 30)) return;
-    components[vertex] = componentNumber;
-    component.push_back(vertex);
-    for (unsigned int sibling : edges_transposed[vertex]) dfs2(sibling);
-}
-
-std::vector< std::set<unsigned int> > componentEdges;
-std::vector<unsigned int> componentUsed;
-void dfs3(unsigned int vertex, unsigned int level = 1)
-{
-    if (componentUsed[vertex] != 0)
+private:
+    constexpr static uint16_t INFINITY = UINT16_MAX;
+    struct Vertex
     {
-        componentUsed[vertex] = std::max(componentUsed[vertex], level);
-        return;
+        std::vector<uint16_t> edges;
+        std::vector<uint16_t> edges_transposed;
+        bool used = false;
+        uint16_t component = INFINITY;
+        uint16_t level = INFINITY;
+    };
+    std::vector<Vertex> vertexes;
+
+    void dfsDirect(uint16_t vertexIndex, std::vector<uint16_t>& order)
+    {
+        Vertex& vertex = this->vertexes[vertexIndex];
+        if (vertex.used) return;
+        vertex.used = true;
+        for (uint16_t sibling : vertex.edges) this->dfsDirect(sibling, order);
+        order.push_back(vertexIndex);
     }
-    componentUsed[vertex] = std::max(componentUsed[vertex], level);
-    for (unsigned int sibling : componentEdges[vertex]) dfs3(sibling, level + 1);
-}
+
+    void dfsReversed(uint16_t vertexIndex, uint16_t componentNumber, std::vector<uint16_t>& component)
+    {
+        Vertex& vertex = this->vertexes[vertexIndex];
+        if (vertex.component != INFINITY) return;
+        vertex.component = componentNumber;
+        component.push_back(vertexIndex);
+        for (uint16_t sibling : vertex.edges_transposed) this->dfsReversed(sibling, componentNumber, component);
+    }
+
+    void dfsLevels(uint16_t vertexIndex, uint16_t level = 1)
+    {
+        Vertex& vertex = this->vertexes[vertexIndex];
+        if (vertex.level != 0) { vertex.level = std::max(vertex.level, level); return; }
+        vertex.level = std::max(vertex.level, level);
+        for (uint16_t sibling : vertex.edges) this->dfsLevels(sibling, level + 1);
+    }
+
+public:
+    Graph(uint16_t vertexes)
+    {
+        this->vertexes.resize(vertexes);
+    }
+
+    void addEdge(uint16_t from, uint16_t to)
+    {
+        this->vertexes[from].edges.push_back(to);
+        this->vertexes[to].edges_transposed.push_back(from);
+    }
+
+    std::vector< std::pair<uint16_t, uint16_t> > calculateMinimalConnectionSet()
+    {
+        std::vector<uint16_t> order;
+        order.reserve(this->vertexes.size());
+        for (uint16_t i = 0; i < this->vertexes.size(); ++i) this->dfsDirect(i, order);
+        
+        std::vector< std::pair<uint16_t, uint16_t> > answer;
+        uint16_t componentNumber = 0;
+        std::vector<uint16_t> component;
+        for (std::vector<uint16_t>::const_reverse_iterator now = order.rbegin(); now != order.rend(); ++now)
+        {
+            if (this->vertexes[*now].component != INFINITY) continue;
+            component.clear();
+            this->dfsReversed(*now, componentNumber++, component);
+            if (component.size() == 1) continue;
+            for (uint16_t i = 0; i < component.size() - 1; ++i) answer.emplace_back(component[i], component[i + 1]);
+            answer.emplace_back(component[component.size() - 1], component[0]);
+        }
+
+
+        std::vector<uint16_t>& componentVertexes = order;
+        componentVertexes.resize(componentNumber);
+        std::fill(componentVertexes.begin(), componentVertexes.end(), INFINITY);
+        for (uint16_t vertexIndex = 0; vertexIndex < this->vertexes.size(); ++vertexIndex)
+        {
+            Vertex& vertex = this->vertexes[vertexIndex];
+            if (componentVertexes[vertex.component] == INFINITY) { componentVertexes[vertex.component] = vertexIndex; continue; }
+            Vertex& componentVertex = this->vertexes[componentVertexes[vertex.component]];
+            componentVertex.edges.insert(componentVertex.edges.end(), vertex.edges.begin(), vertex.edges.end());
+            vertex.edges.clear();
+        }
+
+        std::unordered_set<uint16_t> filter;
+        for (Vertex& vertex : this->vertexes)
+        {
+            filter.clear();
+            for (uint16_t& sibling : vertex.edges)
+            {
+                if (vertex.component == this->vertexes[sibling].component) continue;
+                filter.insert(componentVertexes[this->vertexes[sibling].component]);
+            }
+            vertex.edges.clear();
+            vertex.edges.insert(vertex.edges.end(), filter.begin(), filter.end());
+        }
+
+        for (uint16_t vertexIndex = 0; vertexIndex < this->vertexes.size(); ++vertexIndex)
+        {
+            Vertex& vertex = this->vertexes[vertexIndex];
+            if (vertex.edges.size() == 0) continue;
+            for (Vertex& vertex : this->vertexes) vertex.level = 0;
+            dfsLevels(vertexIndex);
+            vertex.edges.erase(std::remove_if(vertex.edges.begin(), vertex.edges.end(), [&](uint16_t sibling) { return this->vertexes[sibling].level > 2; }), vertex.edges.end());
+        }
+
+        for (uint16_t vertexIndex = 0; vertexIndex < this->vertexes.size(); ++vertexIndex)
+        {
+            for (uint16_t sibling : this->vertexes[vertexIndex].edges) answer.emplace_back(vertexIndex, sibling);
+        }
+
+        return answer;
+    }
+};
 
 int main()
 {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
-    unsigned int n, m;
+    uint16_t n, m;
     std::cin >> n >> m;
-    edges.resize(n);
-    edges_transposed.resize(n);
-    for (unsigned int i = 0; i < m; ++i)
+    Graph graph(n);
+    for (uint16_t i = 0; i < m; ++i)
     {
-        unsigned int from, to;
+        uint16_t from, to;
         std::cin >> from >> to;
-        --from; --to;
-        edges[from].push_back(to);
-        edges_transposed[to].push_back(from);
-    }
-
-    used.resize(n, false);
-    order.reserve(n);
-    for (unsigned int i = 0; i < n; ++i) dfs1(i);
-
-    components.resize(n, (1 << 30));
-    std::vector< std::pair<unsigned int, unsigned int> > answer;
-    for (unsigned int i = 0; i < n; ++i)
-    {
-        if (components[order[n - i - 1]] != (1 << 30)) continue;
-        component.clear();
-        dfs2(order[n - i - 1]);
-        ++componentNumber;
-        if (component.size() == 1) continue;
-        for (unsigned int i = 0; i < component.size() - 1; ++i) answer.emplace_back(component[i], component[i + 1]);
-        answer.emplace_back(component[component.size() - 1], component[0]);
+        graph.addEdge(from - 1, to - 1);
     }
     
-    componentEdges.resize(componentNumber);
-    std::vector<unsigned int> componentVertex(componentNumber, (1 << 30));
-    for (unsigned int vertex = 0; vertex < n; ++vertex)
-    {
-        for (unsigned int sibling : edges[vertex])
-        {
-            if (components[vertex] == components[sibling]) continue;
-            componentEdges[components[vertex]].insert(components[sibling]);
-            componentVertex[components[vertex]] = vertex;
-            componentVertex[components[sibling]] = sibling;
-        }
-    }
-
-    componentUsed.resize(componentNumber);
-    for (unsigned int i = 0; i < componentNumber; ++i)
-    {
-        std::fill(componentUsed.begin(), componentUsed.end(), 0);
-        dfs3(i);
-        for (std::set<unsigned int>::iterator iter = componentEdges[i].begin(); iter != componentEdges[i].end(); )
-        {
-            if (componentUsed[*iter] > 2) iter = componentEdges[i].erase(iter);
-            else ++iter;
-        }
-    }
-
-
-    for (unsigned int i = 0; i < componentNumber; ++i)
-    {
-        for (unsigned int j : componentEdges[i]) answer.emplace_back(componentVertex[i], componentVertex[j]);
-    }
-
+    std::vector< std::pair<uint16_t, uint16_t> > answer = graph.calculateMinimalConnectionSet();
     std::cout << answer.size() << '\n';
-    for (const std::pair<unsigned int, unsigned int>& edge : answer) std::cout << edge.first + 1 << ' ' << edge.second + 1 << '\n';
+    for (const std::pair<uint16_t, uint16_t>& edge : answer) std::cout << edge.first + 1 << ' ' << edge.second + 1 << '\n';
 }

@@ -1,36 +1,70 @@
 #include <ios>
 #include <iostream>
-#include <unordered_set>
+#include <cstdint>
+#include <utility>
 #include <vector>
-#include <iterator>
 
-std::vector<std::vector<unsigned int> > edges;
-std::vector<std::vector<unsigned int> > edges_transposed;
-std::vector<bool> used;
-std::vector<unsigned int> order;
-unsigned int component_number = 0;
-std::vector<unsigned int> components;
+class Graph {
+private:
+    struct Vertex {
+        std::vector<unsigned int> edges;
+        std::vector<unsigned int> edges_transposed;
+        bool used = false;
+        unsigned int component = 0;
+    };
+    std::vector<Vertex> vertexes_;
 
-void dfs1(unsigned int vertex) {
-    if (used[vertex]) {
-        return;
+    void dfsDirect(unsigned int vertex_index, std::vector<unsigned int>& order) {
+        Vertex& vertex = this->vertexes_[vertex_index];
+        if (vertex.used) {
+            return;
+        }
+        vertex.used = true;
+        for (unsigned int sibling : vertex.edges) {
+            this->dfsDirect(sibling, order);
+        }
+        order.push_back(vertex_index);
     }
-    used[vertex] = true;
-    for (unsigned int sibling : edges[vertex]) {
-        dfs1(sibling);
-    }
-    order.push_back(vertex);
-}
 
-void dfs2(unsigned int vertex) {
-    if (components[vertex] != 0) {
-        return;
+    void dfsReversed(unsigned int vertex_index, unsigned int component) {
+        Vertex& vertex = this->vertexes_[vertex_index];
+        if (vertex.component != 0) {
+            return;
+        }
+        vertex.component = component;
+        for (unsigned int sibling : vertex.edges_transposed) {
+            this->dfsReversed(sibling, component);
+        }
     }
-    components[vertex] = component_number;
-    for (unsigned int sibling : edges_transposed[vertex]) {
-        dfs2(sibling);
+
+public:
+    Graph(unsigned int vertexes) {
+        this->vertexes_.resize(vertexes);
     }
-}
+
+    void addEdge(unsigned int from, unsigned int to) {
+        this->vertexes_[from].edges.push_back(to);
+        this->vertexes_[to].edges_transposed.push_back(from);
+    }
+
+    std::pair<unsigned int, std::vector<Vertex> > calculateComponents() {
+        std::vector<unsigned int> order;
+        order.reserve(this->vertexes_.size());
+        for (unsigned int i = 0; i < this->vertexes_.size(); ++i) {
+            this->dfsDirect(i, order);
+        }
+
+        unsigned int component_number = 0;
+        for (std::vector<unsigned int>::const_reverse_iterator now = order.rbegin();
+             now != order.rend(); ++now) {
+            if (this->vertexes_[*now].component != 0) {
+                continue;
+            }
+            this->dfsReversed(*now, ++component_number);
+        }
+        return {component_number, std::move(this->vertexes_)};
+    }
+};
 
 int main() {
     std::ios::sync_with_stdio(false);
@@ -38,34 +72,16 @@ int main() {
 
     unsigned int n, m;
     std::cin >> n >> m;
-    edges.resize(n);
-    edges_transposed.resize(n);
+    Graph graph(n);
     for (unsigned int i = 0; i < m; ++i) {
         unsigned int from, to;
         std::cin >> from >> to;
-        --from;
-        --to;
-        edges[from].push_back(to);
-        edges_transposed[to].push_back(from);
+        graph.addEdge(from - 1, to - 1);
     }
+    const auto [componentsAmount, components] = graph.calculateComponents();
 
-    used.resize(n, false);
-    order.reserve(n);
-    for (unsigned int i = 0; i < n; ++i) {
-        dfs1(i);
-    }
-
-    components.resize(n, 0);
-    for (unsigned int i = 0; i < n; ++i) {
-        if (components[order[n - i - 1]] != 0) {
-            continue;
-        }
-        ++component_number;
-        dfs2(order[n - i - 1]);
-    }
-
-    std::cout << component_number << '\n';
-    for (unsigned int component : components) {
-        std::cout << component << ' ';
+    std::cout << componentsAmount << '\n';
+    for (const auto& component : components) {
+        std::cout << component.component << ' ';
     }
 }

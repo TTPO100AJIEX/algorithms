@@ -1,27 +1,69 @@
 #include <ios>
 #include <iostream>
+#include <cstdint>
 #include <vector>
 #include <string>
 #include <algorithm>
 
-struct Person {
-    std::string name;
-    std::vector<Person*> siblings;
-    bool used = false;
-    int index;
-};
-std::vector<Person*> order;
+class Graph {
+private:
+    struct Vertex {
+        std::vector<uint16_t> edges;
+        bool isSrc = true;
+        bool used = false;
+    };
+    std::vector<Vertex> vertexes_;
+    uint16_t srces_counter_;
 
-void dfs(Person* person) {
-    if (person->used) {
-        return;
+    void dfs(uint16_t vertex_index, std::vector<uint16_t>& order) {
+        Vertex& vertex = this->vertexes_[vertex_index];
+        if (vertex.used) {
+            return;
+        }
+        vertex.used = true;
+        for (uint16_t sibling : vertex.edges) {
+            this->dfs(sibling, order);
+        }
+        order.push_back(vertex_index);
     }
-    person->used = true;
-    for (Person* sibling : person->siblings) {
-        dfs(sibling);
+
+public:
+    Graph(uint16_t vertexes) {
+        this->vertexes_.resize(vertexes);
+        this->srces_counter_ = vertexes;
     }
-    order.push_back(person);
-}
+
+    void addEdge(uint16_t from, uint16_t to) {
+        this->vertexes_[from].edges.push_back(to);
+        if (this->vertexes_[to].isSrc) {
+            --this->srces_counter_;
+            this->vertexes_[to].isSrc = false;
+        }
+    }
+
+    template <typename SortFunction>
+    std::vector<uint16_t> topSort(SortFunction sorter) {
+        std::vector<uint16_t> srces;
+        srces.reserve(this->srces_counter_);
+        for (unsigned int i = 0; i < this->vertexes_.size(); ++i) {
+            if (this->vertexes_[i].isSrc) {
+                srces.push_back(i);
+            }
+        }
+
+        std::sort(srces.begin(), srces.end(), sorter);
+        for (Vertex& vertex : vertexes_) {
+            std::sort(vertex.edges.begin(), vertex.edges.end(), sorter);
+        }
+
+        std::vector<uint16_t> order;
+        order.reserve(this->vertexes_.size());
+        for (uint16_t src : srces) {
+            this->dfs(src, order);
+        }
+        return order;
+    }
+};
 
 int main() {
     std::ios::sync_with_stdio(false);
@@ -30,52 +72,27 @@ int main() {
     unsigned int n, m;
     std::cin >> n >> m;
 
-    std::vector<Person*> people(n);
-    for (unsigned int i = 0; i < n; ++i) {
-        unsigned int index;
+    std::vector<std::string> names(n);
+    for (uint16_t i = 0; i < n; ++i) {
+        uint16_t index;
         std::cin >> index;
-        --index;
-        people[index] = new Person();
-        people[index]->index = index + 1;
         std::cin.ignore(1);
-        std::getline(std::cin, people[index]->name);
+        std::getline(std::cin, names[--index]);
     }
 
-    std::vector<bool> is_src(n, true);
+    Graph graph(n);
     for (unsigned int i = 0; i < m; ++i) {
-        unsigned int from, to;
+        uint16_t from, to;
         std::cin >> from >> to;
-        --from;
-        --to;
-        people[from]->siblings.push_back(people[to]);
-        is_src[to] = false;
+        graph.addEdge(from - 1, to - 1);
     }
 
-    std::vector<Person*> srces;
-    for (unsigned int i = 0; i < n; ++i) {
-        if (is_src[i]) {
-            srces.push_back(people[i]);
-        }
-    }
-
-    for (unsigned int i = 0; i < n; ++i) {
-        std::sort(
-            people[i]->siblings.begin(), people[i]->siblings.end(),
-            [](const Person* first, const Person* second) { return first->name < second->name; });
-    }
-    std::sort(srces.begin(), srces.end(),
-              [](const Person* first, const Person* second) { return first->name < second->name; });
-
-    order.reserve(n);
-    for (Person* person : srces) {
-        dfs(person);
-    }
-
-    for (unsigned int i = order.size(); i > 0; --i) {
-        std::cout << order[i - 1]->name << '\n';
-    }
-
-    for (unsigned int i = 0; i < n; ++i) {
-        delete people[i];
+    std::vector<uint16_t> order =
+        graph.topSort([&names](const uint16_t first, const uint16_t second) {
+            return names[first] < names[second];
+        });
+    for (std::vector<uint16_t>::const_reverse_iterator now = order.rbegin(); now != order.rend();
+         ++now) {
+        std::cout << names[*now] << '\n';
     }
 }
