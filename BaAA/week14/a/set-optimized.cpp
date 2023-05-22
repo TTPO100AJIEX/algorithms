@@ -1,7 +1,7 @@
 #include <ios>
 #include <iostream>
 #include <cstdint>
-#include <queue>
+#include <set>
 #include <vector>
 #include <utility>
 
@@ -26,21 +26,25 @@ int main()
     std::vector<uint64_t> distances(n, INF);
     distances[0] = 0;
 
-    using Result = std::pair<uint64_t, unsigned int>;
-    std::priority_queue<Result, std::vector<Result>, std::greater<Result>> to_update;
-    to_update.emplace(0, 0);
+    auto cmp = [&](unsigned int a, unsigned int b)
+    {
+        if (distances[a] == distances[b]) return a < b;
+        return distances[a] < distances[b];
+    };
+    std::set<unsigned int, decltype(cmp)> to_update(cmp);
+    to_update.insert(0);
     while (!to_update.empty())
     {
-        const auto [ current_distance, from ] = to_update.top();
-        to_update.pop();
-        if (current_distance != distances[from]) continue;
+        const unsigned int from = *(to_update.begin());
+        to_update.erase(to_update.begin());
         for (const Edge& edge : edges[from])
         {
-            uint64_t attempt_distance = current_distance + edge.second;
+            uint64_t attempt_distance = distances[from] + edge.second;
             if (attempt_distance < distances[edge.first])
             {
+                to_update.erase(edge.first);
                 distances[edge.first] = attempt_distance;
-                to_update.emplace(attempt_distance, edge.first);
+                to_update.emplace(edge.first);
             }
         }
     }

@@ -2,56 +2,72 @@
 #include <iostream>
 #include <cstdint>
 #include <vector>
-#include <tuple>
-#include <algorithm>
+#include <utility>
 
 class Graph {
 private:
-    using Edge = std::tuple<unsigned int, unsigned int, int>;
-    std::vector<Edge> edges_;
-    unsigned int vertexes_;
+    using Edge = std::pair<uint16_t, int>;
+    std::vector<std::vector<Edge> > edges_;
+    std::vector<int64_t> distances_;
+
+    void detectNegativeLoop(uint16_t vertex) {
+        if (this->distances_[vertex] == kNeginf) {
+            return;
+        }
+        this->distances_[vertex] = kNeginf;
+        for (const Edge& edge : this->edges_[vertex]) {
+            this->detectNegativeLoop(edge.first);
+        }
+    }
 
 public:
-    Graph(unsigned int vertexes, unsigned int edges) : vertexes_(vertexes) {
-        this->edges_.reserve(edges);
+    constexpr static int64_t kInf = (INT64_MAX >> 1);
+    constexpr static int64_t kNeginf = (INT64_MIN >> 1);
+
+    Graph(uint16_t vertexes) {
+        this->edges_.resize(vertexes);
+        this->distances_.resize(vertexes, kInf);
     }
-    void addEdge(unsigned int from, unsigned int to, int weight) {
-        this->edges_.emplace_back(from, to, weight);
+    void addEdge(uint16_t from, uint16_t to, int weight) {
+        this->edges_[from].emplace_back(to, weight);
     }
 
-    std::vector<int64_t> findDistances(unsigned int from) {
-        constexpr int64_t kInf = INT64_MAX;
-        std::vector<int64_t> distances(this->vertexes_, kInf);
-        distances[from] = 0;
-
-        for (unsigned int i = 0; i < this->vertexes_ - 1; ++i) {
+    std::vector<int64_t> findDistances(uint16_t from) {
+        this->distances_[from] = 0;
+        for (uint16_t i = 0; i < this->edges_.size() - 1; ++i) {
             bool updated = false;
-            for (const Edge& edge : this->edges_) {
-                if (distances[std::get<0>(edge)] == kInf) {
+            for (uint16_t from = 0; from < this->edges_.size(); ++from) {
+                int64_t cur_distance = this->distances_[from];
+                if (cur_distance == kInf) {
                     continue;
                 }
-                if (distances[std::get<1>(edge)] >
-                    distances[std::get<0>(edge)] + std::get<2>(edge)) {
-                    distances[std::get<1>(edge)] = distances[std::get<0>(edge)] + std::get<2>(edge);
-                    updated = true;
+                for (const Edge& edge : this->edges_[from]) {
+                    int64_t distance_attempt = cur_distance + edge.second;
+                    if (distance_attempt < this->distances_[edge.first]) {
+                        this->distances_[edge.first] = distance_attempt;
+                        updated = true;
+                    }
                 }
             }
             if (!updated) {
-                break;
+                return std::move(this->distances_);
             }
         }
 
-        std::vector<unsigned int> negative_loops;
-        for (const Edge& edge : this->edges_) {
-            if (distances[std::get<1>(edge)] > distances[std::get<0>(edge)] + std::get<2>(edge)) {
-                negative_loops.push_back(std::get<1>(edge));
+        for (uint16_t from = 0; from < this->edges_.size(); ++from) {
+            int64_t cur_distance = this->distances_[from];
+            if (cur_distance == kInf || cur_distance == kNeginf) {
+                continue;
+            }
+            for (const Edge& edge : this->edges_[from]) {
+                int64_t distance_attempt = cur_distance + edge.second;
+                if (distance_attempt < this->distances_[edge.first]) {
+                    this->detectNegativeLoop(from);
+                    break;
+                }
             }
         }
-        for (unsigned int vertex : negative_loops) {
-            distances[vertex] = INT64_MIN / 2;
-        }
-
-        return distances;
+        return std::move(this->distances_);
     }
 };
 
@@ -59,24 +75,22 @@ int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
-    unsigned int n, m;
+    uint16_t n, m;
     std::cin >> n >> m;
-    Graph graph(n, m);
-    for (unsigned int i = 0; i < m; ++i) {
-        unsigned int u, v;
-        int w;
-        std::cin >> u >> v >> w;
-        graph.addEdge(u, v, w);
+    Graph graph(n);
+    for (uint16_t i = 0; i < m; ++i) {
+        uint16_t from, to;
+        int weight;
+        std::cin >> from >> to >> weight;
+        graph.addEdge(from, to, weight);
     }
 
-    for (int64_t weight : graph.findDistances(0)) {
-        if (weight == 0) {
-            continue;
-        }
-        if (weight == INT64_MIN / 2) {
+    std::vector<int64_t> distances = graph.findDistances(0);
+    for (uint16_t i = 1; i < n; ++i) {
+        if (distances[i] == Graph::kNeginf) {
             std::cout << "-inf\n";
         } else {
-            std::cout << weight << '\n';
+            std::cout << distances[i] << '\n';
         }
     }
 }
