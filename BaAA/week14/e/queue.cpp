@@ -1,8 +1,7 @@
 #include <ios>
 #include <iostream>
-#include <cstdint>
 #include <climits>
-#include <set>
+#include <queue>
 #include <vector>
 #include <utility>
 
@@ -40,24 +39,19 @@ int main()
     std::vector<unsigned int> distances(n, INF);
     distances[a] = 0;
 
-    auto cmp = [&](unsigned int a, unsigned int b)
-    {
-        if (distances[a] == distances[b]) return a < b;
-        return distances[a] < distances[b];
-    };
-    std::set<unsigned int, decltype(cmp)> to_update(cmp);
-    to_update.insert(a);
+    using Result = std::pair<unsigned int, unsigned int>;
+    std::priority_queue<Result, std::vector<Result>, std::greater<Result>> to_update;
+    to_update.emplace(0, a);
     while (!to_update.empty())
     {
-        const unsigned int from = *(to_update.begin());
-        const unsigned int current_distance = distances[from];
+        const auto [ current_distance, from ] = to_update.top();
         if (from == b)
         {
             std::cout << current_distance << '\n';
             printPath(parents, b);
             return 0;
         }
-        to_update.erase(to_update.begin());
+        to_update.pop();
 
         unsigned int prefix = from;
         while (prefix > 0)
@@ -70,17 +64,15 @@ int main()
                 unsigned int attempt_distance = current_distance + getSumDigits(y);
                 if (from + y < n && attempt_distance < distances[from + y])
                 {
-                    to_update.erase(from + y);
                     distances[from + y] = attempt_distance;
                     parents[from + y] = from;
-                    to_update.insert(from + y);
+                    to_update.emplace(attempt_distance, from + y);
                 }
                 if (from != y && attempt_distance < distances[from - y])
                 {
-                    to_update.erase(from - y);
                     distances[from - y] = attempt_distance;
                     parents[from - y] = from;
-                    to_update.insert(from - y);
+                    to_update.emplace(attempt_distance, from - y);
                 }
             } while (suffix % power10 != prefix);
             prefix /= 10;

@@ -1,8 +1,6 @@
 #include <ios>
 #include <iostream>
-#include <cstdint>
 #include <climits>
-#include <set>
 #include <vector>
 #include <utility>
 #include <functional>
@@ -10,21 +8,21 @@
 class PriorityQueue
 {
 private:
-    using Comparator = std::function<bool(uint16_t, uint16_t)>;
+    using Comparator = std::function<bool(unsigned int, unsigned int)>;
     Comparator comparator;
-    std::vector<uint16_t> storage;
-    std::vector<uint16_t> index;
+    std::vector<unsigned int> storage;
+    std::vector<unsigned int> index;
 
-    void swap(uint16_t first, uint16_t second)
+    void swap(unsigned int first, unsigned int second)
     {
         std::swap(this->index[this->storage[first]], this->index[this->storage[second]]);
         std::swap(this->storage[first], this->storage[second]);
     }
     
-    void siftUp(uint16_t index)
+    void siftUp(unsigned int index)
     {
         if (index == 0) return;
-        const uint16_t parent = (index - 1) >> 1;
+        const unsigned int parent = (index - 1) >> 1;
         if (this->comparator(this->storage[index], this->storage[parent]))
         {
             this->swap(index, parent);
@@ -32,11 +30,11 @@ private:
         }
     }
 
-    void siftDown(uint16_t index)
+    void siftDown(unsigned int index)
     {
-        const uint16_t left = (index << 1) + 1, right = (index << 1) + 2;
+        const unsigned int left = (index << 1) + 1, right = (index << 1) + 2;
         if (left >= this->storage.size()) return;
-        uint16_t to_swap = this->storage.size();
+        unsigned int to_swap = this->storage.size();
         if (right < this->storage.size())
         {
             // both children exist
@@ -56,11 +54,11 @@ private:
     }
 
 public:
-    PriorityQueue(uint16_t maxKey, Comparator comparator) : comparator(comparator) { this->index.resize(maxKey, UINT16_MAX); }
+    PriorityQueue(unsigned int maxKey, Comparator comparator) : comparator(comparator) { this->index.resize(maxKey, UINT_MAX); }
 
-    void insert(uint16_t item)
+    void insert(unsigned int item)
     {
-        if (this->index[item] == UINT16_MAX)
+        if (this->index[item] == UINT_MAX)
         {
             this->index[item] = this->storage.size();
             this->storage.push_back(item);
@@ -68,10 +66,10 @@ public:
         this->siftUp(this->index[item]);
     }
 
-    uint16_t extract()
+    unsigned int extract()
     {
-        uint16_t to_return = this->storage[0];
-        this->index[to_return] = UINT16_MAX;
+        unsigned int to_return = this->storage[0];
+        this->index[to_return] = UINT_MAX;
         this->storage[0] = this->storage[this->storage.size() - 1];
         this->index[this->storage[0]] = 0;
         this->storage.pop_back();
@@ -82,7 +80,7 @@ public:
     bool empty() { return this->storage.empty(); }
 };
 
-unsigned int getSumDigits(uint16_t number)
+unsigned int getSumDigits(unsigned int number)
 {
     unsigned int answer = 0;
     while (number > 0)
@@ -93,7 +91,7 @@ unsigned int getSumDigits(uint16_t number)
     return answer;
 }
 
-void printPath(const std::vector<uint16_t>& parents, uint16_t vertex, uint16_t dist = 0)
+void printPath(const std::vector<unsigned int>& parents, unsigned int vertex, unsigned int dist = 0)
 {
     if (parents[vertex] == 0) { std::cout << dist << '\n'; return; }
     printPath(parents, parents[vertex], dist + 1);
@@ -107,20 +105,20 @@ int main()
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
-    uint16_t n, a, b;
+    unsigned int n, a, b;
     std::cin >> n >> a >> b;
     ++n;
 
     constexpr unsigned int INF = UINT_MAX;
-    std::vector<uint16_t> parents(n, 0);
+    std::vector<unsigned int> parents(n, 0);
     std::vector<unsigned int> distances(n, INF);
     distances[a] = 0;
 
-    PriorityQueue to_update(n, [&](uint16_t a, uint16_t b) { return distances[a] < distances[b]; });
+    PriorityQueue to_update(n, [&](unsigned int a, unsigned int b) { return distances[a] < distances[b]; });
     to_update.insert(a);
     while (!to_update.empty())
     {
-        const uint16_t from = to_update.extract();
+        const unsigned int from = to_update.extract();
         const unsigned int current_distance = distances[from];
         if (from == b)
         {
@@ -129,14 +127,14 @@ int main()
             return 0;
         }
 
-        uint16_t prefix = from;
+        unsigned int prefix = from;
         while (prefix > 0)
         {
-            uint16_t suffix = prefix;
+            unsigned int suffix = prefix;
             unsigned int power10 = 1;
             do
             {
-                uint16_t y = suffix % (power10 *= 10);
+                unsigned int y = suffix % (power10 *= 10);
                 unsigned int attempt_distance = current_distance + getSumDigits(y);
                 if (from + y < n && attempt_distance < distances[from + y])
                 {

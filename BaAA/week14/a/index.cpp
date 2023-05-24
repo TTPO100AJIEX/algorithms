@@ -1,9 +1,86 @@
 #include <ios>
 #include <iostream>
 #include <cstdint>
-#include <set>
+#include <climits>
+#include <queue>
 #include <vector>
 #include <utility>
+#include <functional>
+
+class PriorityQueue
+{
+private:
+    using Comparator = std::function<bool(unsigned int, unsigned int)>;
+    Comparator comparator;
+    std::vector<unsigned int> storage;
+    std::vector<unsigned int> index;
+
+    void swap(unsigned int first, unsigned int second)
+    {
+        std::swap(this->index[this->storage[first]], this->index[this->storage[second]]);
+        std::swap(this->storage[first], this->storage[second]);
+    }
+    
+    void siftUp(unsigned int index)
+    {
+        if (index == 0) return;
+        const unsigned int parent = (index - 1) >> 1;
+        if (this->comparator(this->storage[index], this->storage[parent]))
+        {
+            this->swap(index, parent);
+            this->siftUp(parent);
+        }
+    }
+
+    void siftDown(unsigned int index)
+    {
+        const unsigned int left = (index << 1) + 1, right = (index << 1) + 2;
+        if (left >= this->storage.size()) return;
+        unsigned int to_swap = this->storage.size();
+        if (right < this->storage.size())
+        {
+            // both children exist
+            if (this->comparator(this->storage[left], this->storage[index]) || this->comparator(this->storage[right], this->storage[index]))
+                to_swap = this->comparator(this->storage[left], this->storage[right]) ? left : right;
+        }
+        else
+        {
+            // only left exists
+            if (this->comparator(this->storage[left], this->storage[index])) to_swap = left;
+        }
+        if (to_swap != this->storage.size())
+        {
+            this->swap(index, to_swap);
+            this->siftDown(to_swap);
+        }
+    }
+
+public:
+    PriorityQueue(unsigned int maxKey, Comparator comparator) : comparator(comparator) { this->index.resize(maxKey, UINT_MAX); }
+
+    void insert(unsigned int item)
+    {
+        if (this->index[item] == UINT_MAX)
+        {
+            this->index[item] = this->storage.size();
+            this->storage.push_back(item);
+        }
+        this->siftUp(this->index[item]);
+    }
+
+    unsigned int extract()
+    {
+        unsigned int to_return = this->storage[0];
+        this->index[to_return] = UINT_MAX;
+        this->storage[0] = this->storage[this->storage.size() - 1];
+        this->index[this->storage[0]] = 0;
+        this->storage.pop_back();
+        this->siftDown(0);
+        return to_return;
+    }
+
+    bool empty() { return this->storage.empty(); }
+};
 
 int main()
 {
@@ -26,28 +103,21 @@ int main()
     std::vector<uint64_t> distances(n, INF);
     distances[0] = 0;
 
-    auto cmp = [&](unsigned int a, unsigned int b)
-    {
-        if (distances[a] == distances[b]) return a < b;
-        return distances[a] < distances[b];
-    };
-    std::set<unsigned int, decltype(cmp)> to_update(cmp);
+    PriorityQueue to_update(n, [&](unsigned int a, unsigned int b) { return distances[a] == distances[b] ? a < b : distances[a] < distances[b]; });
     to_update.insert(0);
     while (!to_update.empty())
     {
-        const unsigned int from = *(to_update.begin());
-        to_update.erase(to_update.begin());
+        unsigned int from = to_update.extract();
         for (const Edge& edge : edges[from])
         {
             uint64_t attempt_distance = distances[from] + edge.second;
             if (attempt_distance < distances[edge.first])
             {
-                to_update.erase(edge.first);
                 distances[edge.first] = attempt_distance;
-                to_update.emplace(edge.first);
+                to_update.insert(edge.first);
             }
         }
     }
-
+    
     for (unsigned int i = 1; i < n; ++i) std::cout << distances[i] << '\n';
 }
