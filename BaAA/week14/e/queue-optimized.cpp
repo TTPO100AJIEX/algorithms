@@ -120,12 +120,103 @@ int main()
     {
         const unsigned int from = to_update.extract();
         const unsigned int current_distance = distances[from];
-        if (from == b)
-        {
-            std::cout << current_distance << '\n';
-            printPath(parents, b);
-            return 0;
-        }
+        std::cout << from << std::endl;
+        /*
+        5
+10
+20
+9
+11
+12
+18
+13
+40
+22
+17
+14
+19
+24
+15
+16
+44
+36
+26
+80
+28
+39
+33
+48
+30
+32
+34
+42
+60
+27
+38
+35
+31
+88
+72
+52
+29
+37
+66
+25
+41
+64
+46
+70
+54
+50
+74
+23
+68
+62
+84
+56
+21
+57
+47
+78
+45
+58
+59
+55
+100
+49
+82
+79
+65
+96
+90
+99
+43
+67
+77
+61
+81
+51
+63
+76
+53
+92
+71
+85
+94
+86
+69
+73
+83
+87
+89
+98
+75
+93
+91
+97
+95
+29
+8*/
 
         unsigned int prefix = from;
         while (prefix > 0)
@@ -151,6 +242,13 @@ int main()
             } while (suffix % power10 != prefix);
             prefix /= 10;
         }
+    }
+
+    if (distances[b] != INF)
+    {
+        std::cout << distances[b] << '\n';
+        printPath(parents, b);
+        return 0;
     }
 
     std::cout << -1;

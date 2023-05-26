@@ -45,12 +45,6 @@ int main()
     while (!to_update.empty())
     {
         const auto [ current_distance, from ] = to_update.top();
-        if (from == b)
-        {
-            std::cout << current_distance << '\n';
-            printPath(parents, b);
-            return 0;
-        }
         to_update.pop();
 
         unsigned int prefix = from;
@@ -77,6 +71,13 @@ int main()
             } while (suffix % power10 != prefix);
             prefix /= 10;
         }
+    }
+
+    if (distances[b] != INF)
+    {
+        std::cout << distances[b] << '\n';
+        printPath(parents, b);
+        return 0;
     }
 
     std::cout << -1;

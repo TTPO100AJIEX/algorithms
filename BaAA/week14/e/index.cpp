@@ -120,12 +120,6 @@ int main()
     {
         const unsigned int from = to_update.extract();
         const unsigned int current_distance = distances[from];
-        if (from == b)
-        {
-            std::cout << current_distance << '\n';
-            printPath(parents, b);
-            return 0;
-        }
 
         unsigned int prefix = from;
         while (prefix > 0)
@@ -151,6 +145,13 @@ int main()
             } while (suffix % power10 != prefix);
             prefix /= 10;
         }
+    }
+
+    if (distances[b] != INF)
+    {
+        std::cout << distances[b] << '\n';
+        printPath(parents, b);
+        return 0;
     }
 
     std::cout << -1;

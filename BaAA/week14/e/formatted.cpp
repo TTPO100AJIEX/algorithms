@@ -22,7 +22,7 @@ private:
             return;
         }
         const unsigned int parent = (index - 1) >> 1;
-        if (this->comparator_(this->storage_[index], this->storage_[parent])) {
+        if (!this->comparator_(this->storage_[parent], this->storage_[index])) {
             this->swap(index, parent);
             this->siftUp(parent);
         }
@@ -36,14 +36,14 @@ private:
         unsigned int to_swap = this->storage_.size();
         if (right < this->storage_.size()) {
             // both children exist
-            if (this->comparator_(this->storage_[left], this->storage_[index]) ||
-                this->comparator_(this->storage_[right], this->storage_[index])) {
+            if (!this->comparator_(this->storage_[index], this->storage_[left]) ||
+                !this->comparator_(this->storage_[index], this->storage_[right])) {
                 to_swap =
-                    this->comparator_(this->storage_[left], this->storage_[right]) ? left : right;
+                    !this->comparator_(this->storage_[right], this->storage_[left]) ? left : right;
             }
         } else {
             // only left exists
-            if (this->comparator_(this->storage_[left], this->storage_[index])) {
+            if (!this->comparator_(this->storage_[index], this->storage_[left])) {
                 to_swap = left;
             }
         }
@@ -117,18 +117,12 @@ int main() {
     std::vector<unsigned int> distances(n, kInf);
     distances[a] = 0;
 
-    PriorityQueue to_update(n, [&](unsigned int a, unsigned int b) {
-        return distances[a] == distances[b] ? a < b : distances[a] < distances[b];
-    });
+    PriorityQueue to_update(
+        n, [&](unsigned int a, unsigned int b) { return distances[a] < distances[b]; });
     to_update.insert(a);
     while (!to_update.empty()) {
         const unsigned int from = to_update.extract();
         const unsigned int current_distance = distances[from];
-        if (from == b) {
-            std::cout << current_distance << '\n';
-            printPath(parents, b);
-            return 0;
-        }
 
         unsigned int prefix = from;
         while (prefix > 0) {
@@ -150,6 +144,12 @@ int main() {
             } while (suffix % power10 != prefix);
             prefix /= 10;
         }
+    }
+
+    if (distances[b] != kInf) {
+        std::cout << distances[b] << '\n';
+        printPath(parents, b);
+        return 0;
     }
 
     std::cout << -1;
