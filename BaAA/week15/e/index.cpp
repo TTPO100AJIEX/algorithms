@@ -5,17 +5,16 @@
 #include <vector>
 #include <algorithm>
 #include <queue>
-#include <map>
-#include <utility>
+#include <unordered_map>
+#include <string>
 
 struct Edge
 {
     unsigned int to;
     unsigned int reverse_edge;
     int cur_flow = 0;
-    unsigned int max_flow;
 
-    Edge(unsigned int to, unsigned int reverse_edge, int max_flow) : to(to), reverse_edge(reverse_edge), max_flow(max_flow) { }
+    Edge(unsigned int to, unsigned int reverse_edge) : to(to), reverse_edge(reverse_edge) { }
 };
 std::vector< std::vector<Edge> > edges;
 std::vector<unsigned int> distances;
@@ -32,7 +31,7 @@ void findDistances(unsigned int from)
         to_update.pop();
         for (const Edge& edge : edges[updating])
         {
-            if (edge.cur_flow >= (int)(edge.max_flow) || distances[edge.to] <= distances[updating] + 1) continue;
+            if (edge.cur_flow >= 1 || distances[edge.to] <= distances[updating] + 1) continue;
             distances[edge.to] = distances[updating] + 1;
             to_update.push(edge.to);
         }
@@ -44,7 +43,7 @@ unsigned int findFlow(unsigned int from, unsigned int to, unsigned int flow = (U
     for (Edge& edge : edges[from])
     {
         if (distances[edge.to] != distances[from] + 1) continue;
-        unsigned int add_flow = findFlow(edge.to, to, std::min(flow, (unsigned int)((int)(edge.max_flow) - edge.cur_flow)));
+        unsigned int add_flow = findFlow(edge.to, to, std::min(flow, (unsigned int)(1 - edge.cur_flow)));
         if (add_flow == 0) continue;
         edge.cur_flow += add_flow;
         edges[edge.to][edge.reverse_edge].cur_flow -= add_flow;
@@ -52,9 +51,9 @@ unsigned int findFlow(unsigned int from, unsigned int to, unsigned int flow = (U
     }
     return 0;
 }
-uint64_t maxFlow(unsigned int from, unsigned int to)
+unsigned int maxFlow(unsigned int from, unsigned int to)
 {
-    uint64_t answer = 0;
+    unsigned int answer = 0;
     std::fill(distances.begin(), distances.end(), INF);
     findDistances(from);
     while (distances[to] != INF)
@@ -67,41 +66,38 @@ uint64_t maxFlow(unsigned int from, unsigned int to)
     return answer;
 }
 
-void addEdge(unsigned int from, unsigned int to)
-{
-    edges[from].emplace_back(to, edges[to].size(), 1);
-    edges[to].emplace_back(from, edges[from].size() - 1, 0);
-}
-std::map< std::pair<int, int>, unsigned int > vertexes;
-unsigned int getVertexIndex(int x, int y)
-{
-    if (vertexes.find({ x, y }) == vertexes.end())
-    {
-        addEdge(vertexes.size() << 1, (vertexes.size() << 1) + 1);
-        vertexes.insert_or_assign({ x, y }, vertexes.size() << 1);
-    }
-    return vertexes.find({ x, y })->second;
-}
-
 int main()
 {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
-    
-    unsigned int n;
-    std::cin >> n;
-    edges.resize((n + 1) << 2);
-    distances.resize(edges.size());
-    for (unsigned int i = 0; i < n; i++)
+
+    unsigned int n, m, k;
+    std::cin >> n >> m >> k;
+    std::unordered_map<std::string, unsigned int> vertexes;
+    vertexes.reserve(n);
+    edges.resize(n);
+    distances.resize(n);
+
+    std::string first, second;
+    for (unsigned int i = 0; i < m; ++i)
     {
-        int x1, y1, x2, y2;
-        std::cin >> x1 >> y1 >> x2 >> y2;
-        unsigned int v1 = getVertexIndex(x1, y1), v2 = getVertexIndex(x2, y2);
-        addEdge(v1 + 1, v2);
-        addEdge(v2 + 1, v1);
+        std::cin >> first >> second;
+        unsigned int firstIndex = vertexes.emplace(first, vertexes.size()).first->second;
+        unsigned int secondIndex = vertexes.emplace(second, vertexes.size()).first->second;
+        edges[firstIndex].emplace_back(secondIndex, edges[secondIndex].size());
+        edges[secondIndex].emplace_back(firstIndex, edges[firstIndex].size() - 1);
     }
 
-    int x1, y1, x2, y2;
-    std::cin >> x1 >> y1 >> x2 >> y2;
-    std::cout << maxFlow(getVertexIndex(x1, y1) + 1, getVertexIndex(x2, y2));
+    for (unsigned int test = 0; test < k; ++test)
+    {
+        for (unsigned int from = 0; from < n; ++from)
+        {
+            for (unsigned int i = 0; i < edges[from].size(); ++i) edges[from][i].cur_flow = 0;
+        }
+        std::cin >> first >> second;
+        unsigned int firstIndex = vertexes.emplace(first, vertexes.size()).first->second;
+        unsigned int secondIndex = vertexes.emplace(second, vertexes.size()).first->second;
+        if (firstIndex == secondIndex) std::cout << 0 << '\n';
+        else std::cout << maxFlow(firstIndex, secondIndex) << '\n';
+    }
 }

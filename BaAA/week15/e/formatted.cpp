@@ -5,15 +5,15 @@
 #include <vector>
 #include <algorithm>
 #include <queue>
+#include <unordered_map>
+#include <string>
 
 struct Edge {
     unsigned int to;
     unsigned int reverse_edge;
     int cur_flow = 0;
-    unsigned int max_flow;
 
-    Edge(unsigned int to, unsigned int reverse_edge, int max_flow)
-        : to(to), reverse_edge(reverse_edge), max_flow(max_flow) {
+    Edge(unsigned int to, unsigned int reverse_edge) : to(to), reverse_edge(reverse_edge) {
     }
 };
 std::vector<std::vector<Edge> > edges;
@@ -28,8 +28,7 @@ void findDistances(unsigned int from) {
         unsigned int updating = to_update.front();
         to_update.pop();
         for (const Edge& edge : edges[updating]) {
-            if (edge.cur_flow >= static_cast<int>(edge.max_flow) ||
-                distances[edge.to] <= distances[updating] + 1) {
+            if (edge.cur_flow >= 1 || distances[edge.to] <= distances[updating] + 1) {
                 continue;
             }
             distances[edge.to] = distances[updating] + 1;
@@ -45,10 +44,8 @@ unsigned int findFlow(unsigned int from, unsigned int to, unsigned int flow = (U
         if (distances[edge.to] != distances[from] + 1) {
             continue;
         }
-        unsigned int add_flow = findFlow(
-            edge.to, to,
-            std::min(flow,
-                     static_cast<unsigned int>(static_cast<int>(edge.max_flow) - edge.cur_flow)));
+        unsigned int add_flow =
+            findFlow(edge.to, to, std::min(flow, static_cast<unsigned int>(1 - edge.cur_flow)));
         if (add_flow == 0) {
             continue;
         }
@@ -58,8 +55,8 @@ unsigned int findFlow(unsigned int from, unsigned int to, unsigned int flow = (U
     }
     return 0;
 }
-uint64_t maxFlow(unsigned int from, unsigned int to) {
-    uint64_t answer = 0;
+unsigned int maxFlow(unsigned int from, unsigned int to) {
+    unsigned int answer = 0;
     std::fill(distances.begin(), distances.end(), kInf);
     findDistances(from);
     while (distances[to] != kInf) {
@@ -78,18 +75,35 @@ int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
-    unsigned int n, m;
-    std::cin >> n >> m;
+    unsigned int n, m, k;
+    std::cin >> n >> m >> k;
+    std::unordered_map<std::string, unsigned int> vertexes;
+    vertexes.reserve(n);
     edges.resize(n);
-    distances.resize(edges.size());
+    distances.resize(n);
+
+    std::string first, second;
     for (unsigned int i = 0; i < m; ++i) {
-        unsigned int from, to, max_flow;
-        std::cin >> from >> to >> max_flow;
-        --from;
-        --to;
-        edges[from].emplace_back(to, edges[to].size(), max_flow);
-        edges[to].emplace_back(from, edges[from].size() - 1, 0);
+        std::cin >> first >> second;
+        unsigned int first_index = vertexes.emplace(first, vertexes.size()).first->second;
+        unsigned int second_index = vertexes.emplace(second, vertexes.size()).first->second;
+        edges[first_index].emplace_back(second_index, edges[second_index].size());
+        edges[second_index].emplace_back(first_index, edges[first_index].size() - 1);
     }
 
-    std::cout << maxFlow(0, n - 1);
+    for (unsigned int test = 0; test < k; ++test) {
+        for (unsigned int from = 0; from < n; ++from) {
+            for (unsigned int i = 0; i < edges[from].size(); ++i) {
+                edges[from][i].cur_flow = 0;
+            }
+        }
+        std::cin >> first >> second;
+        unsigned int first_index = vertexes.emplace(first, vertexes.size()).first->second;
+        unsigned int second_index = vertexes.emplace(second, vertexes.size()).first->second;
+        if (first_index == second_index) {
+            std::cout << 0 << '\n';
+        } else {
+            std::cout << maxFlow(first_index, second_index) << '\n';
+        }
+    }
 }

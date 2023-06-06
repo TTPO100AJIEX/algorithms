@@ -20,6 +20,11 @@ std::vector<std::vector<Edge> > edges;
 std::vector<unsigned int> distances;
 constexpr unsigned int kInf = (UINT_MAX >> 1);
 
+void addEdge(unsigned int from, unsigned int to, unsigned int max_flow) {
+    edges[from].emplace_back(to, edges[to].size(), max_flow);
+    edges[to].emplace_back(from, edges[from].size() - 1, 0);
+}
+
 void findDistances(unsigned int from) {
     distances[from] = 0;
     static std::queue<unsigned int> to_update;
@@ -75,21 +80,59 @@ uint64_t maxFlow(unsigned int from, unsigned int to) {
 }
 
 int main() {
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
-
     unsigned int n, m;
     std::cin >> n >> m;
-    edges.resize(n);
+    edges.resize(n * m + 2);
     distances.resize(edges.size());
-    for (unsigned int i = 0; i < m; ++i) {
-        unsigned int from, to, max_flow;
-        std::cin >> from >> to >> max_flow;
-        --from;
-        --to;
-        edges[from].emplace_back(to, edges[to].size(), max_flow);
-        edges[to].emplace_back(from, edges[from].size() - 1, 0);
+
+    unsigned int sum_connections = 0;
+    for (unsigned int row = 0; row < n; ++row) {
+        for (unsigned int col = 0; col < m; ++col) {
+            char symbol;
+            std::cin >> symbol;
+            unsigned int connections;
+            switch (symbol) {
+                case 'H': {
+                    connections = 1;
+                    break;
+                }
+                case 'O': {
+                    connections = 2;
+                    break;
+                }
+                case 'N': {
+                    connections = 3;
+                    break;
+                }
+                case 'C': {
+                    connections = 4;
+                    break;
+                }
+                default: {
+                    connections = 0;
+                }
+            }
+            sum_connections += connections;
+            if (col % 2 == row % 2) {
+                addEdge(0, row * m + col + 1, connections);
+                if (row != 0) {
+                    addEdge(row * m + col + 1, (row - 1) * m + col + 1, 1);
+                }
+                if (row != n - 1) {
+                    addEdge(row * m + col + 1, (row + 1) * m + col + 1, 1);
+                }
+                if (col != 0) {
+                    addEdge(row * m + col + 1, row * m + (col - 1) + 1, 1);
+                }
+                if (col != m - 1) {
+                    addEdge(row * m + col + 1, row * m + (col + 1) + 1, 1);
+                }
+            } else {
+                addEdge(row * m + col + 1, n * m + 1, connections);
+            }
+        }
     }
 
-    std::cout << maxFlow(0, n - 1);
+    unsigned int flow = maxFlow(0, n * m + 1);
+    std::cout << ((flow << 1) == sum_connections ? "Valid" : "Invalid");
 }

@@ -5,8 +5,6 @@
 #include <vector>
 #include <algorithm>
 #include <queue>
-#include <map>
-#include <utility>
 
 struct Edge
 {
@@ -20,6 +18,12 @@ struct Edge
 std::vector< std::vector<Edge> > edges;
 std::vector<unsigned int> distances;
 constexpr unsigned int INF = (UINT_MAX >> 1);
+
+void addEdge(unsigned int from, unsigned int to, unsigned int max_flow)
+{
+    edges[from].emplace_back(to, edges[to].size(), max_flow);
+    edges[to].emplace_back(from, edges[from].size() - 1, 0);
+}
 
 void findDistances(unsigned int from)
 {
@@ -67,41 +71,45 @@ uint64_t maxFlow(unsigned int from, unsigned int to)
     return answer;
 }
 
-void addEdge(unsigned int from, unsigned int to)
-{
-    edges[from].emplace_back(to, edges[to].size(), 1);
-    edges[to].emplace_back(from, edges[from].size() - 1, 0);
-}
-std::map< std::pair<int, int>, unsigned int > vertexes;
-unsigned int getVertexIndex(int x, int y)
-{
-    if (vertexes.find({ x, y }) == vertexes.end())
-    {
-        addEdge(vertexes.size() << 1, (vertexes.size() << 1) + 1);
-        vertexes.insert_or_assign({ x, y }, vertexes.size() << 1);
-    }
-    return vertexes.find({ x, y })->second;
-}
-
 int main()
 {
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
-    
-    unsigned int n;
-    std::cin >> n;
-    edges.resize((n + 1) << 2);
+    unsigned int n, m;
+    std::cin >> n >> m;
+    edges.resize(n * m + 2);
     distances.resize(edges.size());
-    for (unsigned int i = 0; i < n; i++)
-    {
-        int x1, y1, x2, y2;
-        std::cin >> x1 >> y1 >> x2 >> y2;
-        unsigned int v1 = getVertexIndex(x1, y1), v2 = getVertexIndex(x2, y2);
-        addEdge(v1 + 1, v2);
-        addEdge(v2 + 1, v1);
-    }
 
-    int x1, y1, x2, y2;
-    std::cin >> x1 >> y1 >> x2 >> y2;
-    std::cout << maxFlow(getVertexIndex(x1, y1) + 1, getVertexIndex(x2, y2));
+    unsigned int sum_connections = 0;
+    for (unsigned int row = 0; row < n; ++row)
+    {
+        for (unsigned int col = 0; col < m; ++col)
+        {
+            char symbol;
+            std::cin >> symbol;
+            unsigned int connections;
+            switch (symbol)
+            {
+                case 'H': { connections = 1; break; }
+                case 'O': { connections = 2; break; }
+                case 'N': { connections = 3; break; }
+                case 'C': { connections = 4; break; }
+                default: { connections = 0; }
+            }
+            sum_connections += connections;
+            if (col % 2 == row % 2)
+            {
+                addEdge(0, row * m + col + 1, connections);
+                if (row != 0) addEdge(row * m + col + 1, (row - 1) * m + col + 1, 1);
+                if (row != n - 1) addEdge(row * m + col + 1, (row + 1) * m + col + 1, 1);
+                if (col != 0) addEdge(row * m + col + 1, row * m + (col - 1) + 1, 1);
+                if (col != m - 1) addEdge(row * m + col + 1, row * m + (col + 1) + 1, 1);
+            }
+            else
+            {
+                addEdge(row * m + col + 1, n * m + 1, connections);
+            }
+        }
+    }
+    
+    unsigned int flow = maxFlow(0, n * m + 1);
+    std::cout << ((flow << 1) == sum_connections ? "Valid" : "Invalid");
 }
