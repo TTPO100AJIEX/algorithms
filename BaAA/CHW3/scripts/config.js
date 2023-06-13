@@ -10,6 +10,6 @@ export const algorithms = [
     "floyd-warshall"
 ];
 
-export const iterations = 5;
+export const iterations = 50;
 
 export const MIN_EDGE_WEIGHT = 1, MAX_EDGE_WEIGHT = 10;
