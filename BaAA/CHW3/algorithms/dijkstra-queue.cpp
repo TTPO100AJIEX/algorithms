@@ -91,6 +91,5 @@ int main(__attribute__ ((unused)) int argc, char** argv)
     
     std::cout << answer << '\n';
     std::cout << "Time spent: "
-                << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns = "
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms\n";
+                << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns";
 }

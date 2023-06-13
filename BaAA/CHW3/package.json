@@ -7,6 +7,7 @@
     "license": "MIT",
     "scripts":
     {
-        "gen": "node scripts/gen.js"
+        "gen": "node scripts/gen.js",
+        "run": "node scripts/run.js"
     }
 }
